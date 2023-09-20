@@ -1,0 +1,5 @@
+name: MyDrops
+version: '${project.version}'
+main: net.maxxqc.mydrops.mydrops.MyDrops
+api-version: 1.20
+authors: [ Maxx_Qc ]
