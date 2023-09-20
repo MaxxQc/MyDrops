@@ -83,8 +83,7 @@ public final class MyDrops extends JavaPlugin implements Listener
             setItemStackOwner(is, uuid);
         }
     }
-
-    //TODO casser paiting + casser item frame + bateau
+    
     @EventHandler
     public void onHangingBreak(HangingBreakByEntityEvent e)
     {
