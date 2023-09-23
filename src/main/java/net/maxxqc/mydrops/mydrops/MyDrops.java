@@ -1,11 +1,10 @@
 package net.maxxqc.mydrops.mydrops;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Container;
-import org.bukkit.entity.ItemFrame;
-import org.bukkit.entity.Player;
-import org.bukkit.entity.Projectile;
+import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -19,6 +18,7 @@ import org.bukkit.event.vehicle.VehicleDestroyEvent;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -26,7 +26,8 @@ import java.util.UUID;
 
 public final class MyDrops extends JavaPlugin implements Listener
 {
-    private final NamespacedKey NAMESPACED_KEY = new NamespacedKey(this, "mydrops-player-uuid");
+    private final String MYDROPS_TAG = "mydrops-player-uuid";
+    private final NamespacedKey NAMESPACED_KEY = new NamespacedKey(this, MYDROPS_TAG);
 
     @Override
     public void onEnable()
@@ -48,16 +49,19 @@ public final class MyDrops extends JavaPlugin implements Listener
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent e) {
-        if (!(e.getBlock().getState() instanceof Container))
-            return;
-
-        Container c = ((Container) e.getBlock().getState());
-
-        for (ItemStack is : c.getInventory().getContents())
+        if (e.getBlock().getState() instanceof Container)
         {
-            if (is == null) continue;
-            setItemStackOwner(is, e.getPlayer().getUniqueId());
+            Container c = ((Container) e.getBlock().getState());
+
+            for (ItemStack is : c.getInventory().getContents())
+            {
+                if (is == null)
+                    continue;
+                setItemStackOwner(is, e.getPlayer().getUniqueId());
+            }
         }
+        else
+            e.getBlock().setMetadata(MYDROPS_TAG, new FixedMetadataValue(this, e.getPlayer().getUniqueId()));
     }
 
     @EventHandler
@@ -81,18 +85,33 @@ public final class MyDrops extends JavaPlugin implements Listener
         {
             if (is == null) continue;
             setItemStackOwner(is, uuid);
+            e.getVehicle().getWorld().dropItemNaturally(e.getVehicle().getLocation(), is);
         }
     }
-    
+
     @EventHandler
     public void onHangingBreak(HangingBreakByEntityEvent e)
     {
         if (!(e.getRemover() instanceof Player))
             return;
 
-        //TODO set owner for the actual hanging drop
-        //how can we detect if the entity has the namespaced key when it is turned into an item?
-        e.getEntity().getPersistentDataContainer().set(NAMESPACED_KEY, PersistentDataType.STRING, e.getRemover().getUniqueId().toString());
+        ItemStack is = null;
+
+        if (e.getEntity() instanceof ItemFrame)
+            is = new ItemStack(Material.ITEM_FRAME);
+        else if (e.getEntity() instanceof GlowItemFrame)
+            is = new ItemStack(Material.GLOW_ITEM_FRAME);
+        else if (e.getEntity() instanceof LeashHitch)
+            is = new ItemStack(Material.LEAD);
+        else if (e.getEntity() instanceof Painting)
+            is = new ItemStack(Material.PAINTING);
+
+        if (is == null) return;
+
+        e.setCancelled(true);
+        e.getEntity().remove(); //TODO this thing spawns a lead
+        setItemStackOwner(is, e.getRemover().getUniqueId());
+        e.getEntity().getWorld().dropItemNaturally(e.getEntity().getLocation(), is);
     }
 
     @EventHandler
@@ -111,7 +130,7 @@ public final class MyDrops extends JavaPlugin implements Listener
         else
             return;
 
-        ifr.getPersistentDataContainer().set(NAMESPACED_KEY, PersistentDataType.STRING, uuid.toString());
+        //ifr.getPersistentDataContainer().set(NAMESPACED_KEY, PersistentDataType.STRING, uuid.toString());
         ifr.setItem(setItemStackOwner(ifr.getItem(), uuid, true), false);
     }
 
