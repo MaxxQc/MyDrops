@@ -1,18 +1,12 @@
 package net.maxxqc.mydrops.mydrops;
 
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.vehicle.ChestBoat;
 import net.minecraft.world.entity.vehicle.EntityBoat;
 import net.minecraft.world.entity.vehicle.EntityMinecartAbstract;
-import net.minecraft.world.entity.vehicle.EntityMinecartHopper;
-import net.minecraft.world.item.Item;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Container;
-import org.bukkit.craftbukkit.v1_19_R1.CraftServer;
 import org.bukkit.craftbukkit.v1_19_R1.entity.CraftBoat;
-import org.bukkit.craftbukkit.v1_19_R1.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_19_R1.entity.CraftMinecart;
 import org.bukkit.craftbukkit.v1_19_R1.inventory.CraftItemStack;
 import org.bukkit.entity.*;
@@ -34,7 +28,6 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.UUID;
 
 public final class MyDrops extends JavaPlugin implements Listener
