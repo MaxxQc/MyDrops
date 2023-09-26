@@ -1,9 +1,20 @@
 package net.maxxqc.mydrops.mydrops;
 
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.vehicle.ChestBoat;
+import net.minecraft.world.entity.vehicle.EntityBoat;
+import net.minecraft.world.entity.vehicle.EntityMinecartAbstract;
+import net.minecraft.world.entity.vehicle.EntityMinecartHopper;
+import net.minecraft.world.item.Item;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Container;
+import org.bukkit.craftbukkit.v1_19_R1.CraftServer;
+import org.bukkit.craftbukkit.v1_19_R1.entity.CraftBoat;
+import org.bukkit.craftbukkit.v1_19_R1.entity.CraftEntity;
+import org.bukkit.craftbukkit.v1_19_R1.entity.CraftMinecart;
+import org.bukkit.craftbukkit.v1_19_R1.inventory.CraftItemStack;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -22,6 +33,8 @@ import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.UUID;
 
 public final class MyDrops extends JavaPlugin implements Listener
@@ -67,8 +80,6 @@ public final class MyDrops extends JavaPlugin implements Listener
     @EventHandler
     public void onVehicleBreak(VehicleDestroyEvent e)
     {
-        //TODO set owner for the actual vehicle drop
-
         if (!(e.getVehicle() instanceof InventoryHolder))
             return;
 
@@ -81,12 +92,43 @@ public final class MyDrops extends JavaPlugin implements Listener
         else
             return;
 
+        ItemStack itemStack = getItemStackFromVehicle(e.getVehicle());
+        e.setCancelled(true);
+
         for (ItemStack is : ((InventoryHolder) e.getVehicle()).getInventory().getContents())
         {
             if (is == null) continue;
             setItemStackOwner(is, uuid);
             e.getVehicle().getWorld().dropItemNaturally(e.getVehicle().getLocation(), is);
         }
+
+        e.getVehicle().remove();
+        e.getVehicle().getWorld().dropItemNaturally(e.getVehicle().getLocation(), setItemStackOwner(itemStack, uuid));
+    }
+
+    private ItemStack getItemStackFromVehicle(Vehicle vehicle)
+    {
+        if (vehicle instanceof CraftBoat)
+        {
+            try
+            {
+                return new ItemStack(Material.valueOf(
+                        EntityBoat.class.getMethod("h").invoke(((CraftBoat) vehicle).getHandle())
+                                .toString().toUpperCase()));
+            }
+            catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ignored) {}
+        }
+        else if (vehicle instanceof CraftMinecart)
+        {
+            try
+            {
+                return CraftItemStack.asBukkitCopy((net.minecraft.world.item.ItemStack)
+                        EntityMinecartAbstract.class.getMethod("dn").invoke(((CraftMinecart) vehicle).getHandle()));
+            }
+            catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ignored) {}
+        }
+
+        return null;
     }
 
     @EventHandler
