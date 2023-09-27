@@ -1,0 +1,12 @@
+name: MyDrops
+version: '${project.version}'
+main: net.maxxqc.mydrops.MyDrops
+authors: [ Maxx_Qc ]
+api-version: "1.13"
+permissions:
+  mydrops.bypass.pickup:
+    description: Allow a player to pickup any item
+    default: false
+  mydrops.bypass.drop:
+    description: Allow a player to drop items for anyone to pickup
+    default: false

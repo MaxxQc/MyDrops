@@ -1,5 +1,0 @@
-name: MyDrops
-version: '${project.version}'
-main: net.maxxqc.mydrops.mydrops.MyDrops
-authors: [ Maxx_Qc ]
-api-version: "1.13"

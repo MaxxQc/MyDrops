@@ -1,14 +1,9 @@
-package net.maxxqc.mydrops.mydrops;
+package net.maxxqc.mydrops;
 
-import net.minecraft.world.entity.vehicle.EntityBoat;
-import net.minecraft.world.entity.vehicle.EntityMinecartAbstract;
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
+import fr.skytasul.glowingentities.GlowingEntities;
+import net.maxxqc.mydrops.nms.NMSHandler;
+import org.bukkit.*;
 import org.bukkit.block.Container;
-import org.bukkit.craftbukkit.v1_19_R1.entity.CraftBoat;
-import org.bukkit.craftbukkit.v1_19_R1.entity.CraftMinecart;
-import org.bukkit.craftbukkit.v1_19_R1.inventory.CraftItemStack;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -16,6 +11,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockDropItemEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.event.hanging.HangingBreakByEntityEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
@@ -27,7 +23,7 @@ import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.lang.reflect.InvocationTargetException;
+import java.util.ListIterator;
 import java.util.UUID;
 
 public final class MyDrops extends JavaPlugin implements Listener
@@ -35,22 +31,62 @@ public final class MyDrops extends JavaPlugin implements Listener
     private final String MYDROPS_TAG = "mydrops-player-uuid";
     private final NamespacedKey NAMESPACED_KEY = new NamespacedKey(this, MYDROPS_TAG);
 
+    private NMSHandler nmsHandler;
+    private GlowingEntities glowingEntities;
+
     @Override
     public void onEnable()
     {
-        Bukkit.getServer().getPluginManager().registerEvents(this, this);
+        try
+        {
+            String version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3].substring(1);
+
+            if (Integer.parseInt(version.split("_")[1]) >= 17)
+                glowingEntities = new GlowingEntities(this);
+
+            nmsHandler = (NMSHandler) Class.forName("net.maxxqc.mydrops.nms.NMSHandler_v" + version).newInstance();
+            Bukkit.getServer().getPluginManager().registerEvents(this, this);
+        }
+        catch (InstantiationException | IllegalAccessException | ClassNotFoundException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onDisable()
+    {
+        if (glowingEntities == null) return;
+
+        glowingEntities.disable();
     }
 
     @EventHandler
     public void onDrop(PlayerDropItemEvent e)
     {
-        e.getItemDrop().setOwner(e.getPlayer().getUniqueId());
+        handleItemDrop(e.getItemDrop(), e.getPlayer());
     }
 
     @EventHandler
     public void onBlockDrop(BlockDropItemEvent e)
     {
-        e.getItems().forEach(i -> i.setOwner(e.getPlayer().getUniqueId()));
+        e.getItems().forEach(i -> handleItemDrop(i, e.getPlayer()));
+    }
+
+    private void handleItemDrop(Item item, Player player)
+    {
+        if (player == null || player.hasPermission("mydrops.bypass.drop")) return;
+
+        item.getPersistentDataContainer().set(NAMESPACED_KEY, PersistentDataType.STRING, player.getUniqueId().toString());
+
+        if (glowingEntities == null) return;
+
+        try
+        {
+            glowingEntities.setGlowing(item, player, ChatColor.AQUA);
+        } catch (ReflectiveOperationException ex) {
+            ex.printStackTrace();
+        }
     }
 
     @EventHandler
@@ -73,9 +109,6 @@ public final class MyDrops extends JavaPlugin implements Listener
     @EventHandler
     public void onVehicleBreak(VehicleDestroyEvent e)
     {
-        if (!(e.getVehicle() instanceof InventoryHolder))
-            return;
-
         UUID uuid;
 
         if (e.getAttacker() instanceof Player)
@@ -85,49 +118,42 @@ public final class MyDrops extends JavaPlugin implements Listener
         else
             return;
 
-        ItemStack itemStack = getItemStackFromVehicle(e.getVehicle());
         e.setCancelled(true);
 
-        for (ItemStack is : ((InventoryHolder) e.getVehicle()).getInventory().getContents())
+        if (e.getVehicle() instanceof InventoryHolder)
         {
-            if (is == null) continue;
-            setItemStackOwner(is, uuid);
-            e.getVehicle().getWorld().dropItemNaturally(e.getVehicle().getLocation(), is);
+            for (ItemStack is : ((InventoryHolder) e.getVehicle()).getInventory())
+            {
+                if (is == null)
+                    continue;
+                e.getVehicle().getWorld().dropItemNaturally(e.getVehicle().getLocation(), setItemStackOwner(is, uuid));
+                ((InventoryHolder) e.getVehicle()).getInventory().remove(is);
+            }
         }
 
+        ItemStack itemStack = getItemStackFromVehicle(e.getVehicle());
         e.getVehicle().remove();
+
+        // Creative players simply drop the content
+        if (((Player) e.getAttacker()).getGameMode() == GameMode.CREATIVE) return;
+
         e.getVehicle().getWorld().dropItemNaturally(e.getVehicle().getLocation(), setItemStackOwner(itemStack, uuid));
     }
 
     private ItemStack getItemStackFromVehicle(Vehicle vehicle)
     {
-        if (vehicle instanceof CraftBoat)
-        {
-            try
-            {
-                return new ItemStack(Material.valueOf(
-                        EntityBoat.class.getMethod("h").invoke(((CraftBoat) vehicle).getHandle())
-                                .toString().toUpperCase()));
-            }
-            catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ignored) {}
+        if (vehicle instanceof Boat) {
+            return nmsHandler.getItemStackFromBoat(vehicle);
+        } else if (vehicle instanceof Minecart) {
+            return nmsHandler.getItemStackFromMinecart(vehicle);
         }
-        else if (vehicle instanceof CraftMinecart)
-        {
-            try
-            {
-                return CraftItemStack.asBukkitCopy((net.minecraft.world.item.ItemStack)
-                        EntityMinecartAbstract.class.getMethod("dn").invoke(((CraftMinecart) vehicle).getHandle()));
-            }
-            catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ignored) {}
-        }
-
         return null;
     }
 
     @EventHandler
     public void onHangingBreak(HangingBreakByEntityEvent e)
     {
-        if (!(e.getRemover() instanceof Player))
+        if (!(e.getRemover() instanceof Player) || ((Player) e.getRemover()).getGameMode() == GameMode.CREATIVE)
             return;
 
         ItemStack is = null;
@@ -152,7 +178,7 @@ public final class MyDrops extends JavaPlugin implements Listener
     @EventHandler
     public void onEntityDmgByEntity(EntityDamageByEntityEvent e)
     {
-        if (!(e.getEntity() instanceof ItemFrame))
+        if (!(e.getEntity() instanceof ItemFrame) || e.getEntity() instanceof Vehicle)
             return;
 
         ItemFrame ifr = (ItemFrame) e.getEntity();
@@ -165,7 +191,6 @@ public final class MyDrops extends JavaPlugin implements Listener
         else
             return;
 
-        //ifr.getPersistentDataContainer().set(NAMESPACED_KEY, PersistentDataType.STRING, uuid.toString());
         ifr.setItem(setItemStackOwner(ifr.getItem(), uuid, true), false);
     }
 
@@ -199,7 +224,16 @@ public final class MyDrops extends JavaPlugin implements Listener
         if (str == null)
             return;
 
-        e.getEntity().setOwner(UUID.fromString(str));
+        UUID ownerUUID = UUID.fromString(str);
+        handleItemDrop(e.getEntity(), Bukkit.getPlayer(ownerUUID));
+    }
+
+    @EventHandler
+    public void onPickup(EntityPickupItemEvent e)
+    {
+        String uuidValue = e.getItem().getPersistentDataContainer().getOrDefault(NAMESPACED_KEY, PersistentDataType.STRING, "");
+        if (!(e.getEntity() instanceof Player) || uuidValue.equals("") || e.getEntity().getUniqueId().toString().equals(uuidValue) || e.getEntity().hasPermission("mydrops.bypass.pickup")) return;
+        e.setCancelled(true);
     }
 
     private ItemStack setItemStackOwner(ItemStack is, UUID uniqueId, boolean clone)
