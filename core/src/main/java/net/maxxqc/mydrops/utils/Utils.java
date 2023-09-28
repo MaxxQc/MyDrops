@@ -1,25 +1,22 @@
 package net.maxxqc.mydrops.utils;
 
+import com.iridium.iridiumcolorapi.IridiumColorAPI;
 import fr.skytasul.glowingentities.GlowingEntities;
-import net.maxxqc.mydrops.nms.NMSHandler;
 import org.bstats.bukkit.Metrics;
-import org.bstats.charts.DrilldownPie;
 import org.bstats.charts.SimplePie;
-import org.bstats.charts.SingleLineChart;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.entity.*;
+import org.bukkit.entity.minecart.*;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 
 public class Utils
 {
@@ -29,7 +26,7 @@ public class Utils
     private static final String LEASH_TAG = "mydrops-leash";
 
     private static NamespacedKey namespaceKey;
-    private static NMSHandler nmsHandler;
+    //private static NMSHandler nmsHandler;
     private static GlowingEntities glowingEntities;
 
     public static void init(JavaPlugin plugin, int pluginId)
@@ -44,7 +41,7 @@ public class Utils
             metrics.addCustomChart(new SimplePie("option_glow", () -> String.valueOf(ConfigManager.hasOptionGlow())));
 
             if (ConfigManager.hasOptionGlow())
-                metrics.addCustomChart(new SimplePie("option_glow-color", () -> ConfigManager.getGlowColor().toString()));
+                metrics.addCustomChart(new SimplePie("option_glowcolor", () -> ConfigManager.getGlowColor().toString()));
 
             metrics.addCustomChart(new SimplePie("protection_item-drop", () -> String.valueOf(ConfigManager.hasItemDropProtection())));
             metrics.addCustomChart(new SimplePie("protection_block-break", () -> String.valueOf(ConfigManager.hasBlockBreakProtection())));
@@ -54,34 +51,26 @@ public class Utils
             metrics.addCustomChart(new SimplePie("protection_entity-kill", () -> String.valueOf(ConfigManager.hasEntityKillProtection())));
             metrics.addCustomChart(new SimplePie("protection_player-death", () -> String.valueOf(ConfigManager.hasPlayerDeathProtection())));
 
-            metrics.addCustomChart(new DrilldownPie("minecraft_version", () ->
-            {
-                Map<String, Map<String, Integer>> map = new HashMap<>();
-                String bukkitVersion = Bukkit.getServer().getVersion();
-                Map<String, Integer> entry = new HashMap<>();
-                entry.put(bukkitVersion, 1);
-                map.put(bukkitVersion, entry);
-                return map;
-            }));
-
             plugin.getLogger().info("Successfully loaded bStats");
         }
 
-        try
-        {
-            String version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3].substring(1);
-            String[] verSplit = version.split("_");
-            int centerVersion = Integer.parseInt(verSplit[1]);
-            if (centerVersion >= 17 && ConfigManager.hasOptionGlow())
-                if (!(centerVersion == 20 && version.split("_")[2].equals("R2")))
-                    Utils.glowingEntities = new GlowingEntities(plugin);
+        String version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3].substring(1);
+        String[] verSplit = version.split("_");
+        int centerVersion = Integer.parseInt(verSplit[1]);
 
+        if (centerVersion >= 17 && ConfigManager.hasOptionGlow())
+            if (!(centerVersion == 20 && version.split("_")[2].equals("R2")))
+                Utils.glowingEntities = new GlowingEntities(plugin);
+
+
+        /*  try
+        {
             Utils.nmsHandler = (NMSHandler) Class.forName("net.maxxqc.mydrops.nms.NMSHandler_v" + version).newInstance();
         }
-        catch (InstantiationException | IllegalAccessException | ClassNotFoundException e)
+        catch (ClassNotFoundException e)
         {
             e.printStackTrace();
-        }
+        } */
     }
 
     public static void handleItemDrop(Item item, Player player)
@@ -129,9 +118,9 @@ public class Utils
     public static ItemStack getItemStackFromVehicle(Vehicle vehicle)
     {
         if (vehicle instanceof Boat) {
-            return nmsHandler.getItemStackFromBoat(vehicle);
+            return getDropItemFromBoat((Boat) vehicle);
         } else if (vehicle instanceof Minecart) {
-            return nmsHandler.getItemStackFromMinecart(vehicle);
+            return getDropItemFromMinecart((Minecart) vehicle);
         }
 
         return null;
@@ -161,9 +150,37 @@ public class Utils
     public static boolean parseLeashEntity(Entity entity)
     {
         if (!entity.hasMetadata(LEASH_TAG)) return false;
-
         boolean value = entity.getMetadata(LEASH_TAG).get(0).value().equals("true");
         entity.removeMetadata(LEASH_TAG, plugin);
         return value;
+    }
+
+    public static String colorize(String string)
+    {
+        return IridiumColorAPI.process(string);
+    }
+
+    public static ItemStack getDropItemFromBoat(Boat boat)
+    {
+        if (boat instanceof ChestBoat)
+            return new ItemStack(Material.valueOf(boat.getBoatType() + "_CHEST_BOAT"));
+        else
+            return new ItemStack(Material.valueOf(boat.getBoatType() + "_BOAT"));
+    }
+
+    public static ItemStack getDropItemFromMinecart(Minecart minecart)
+    {
+        if (minecart instanceof ExplosiveMinecart)
+            return new ItemStack(Material.TNT_MINECART);
+        else if (minecart instanceof CommandMinecart)
+            return new ItemStack(Material.COMMAND_BLOCK_MINECART);
+        else if (minecart instanceof HopperMinecart)
+            return new ItemStack(Material.HOPPER_MINECART);
+        else if (minecart instanceof StorageMinecart)
+            return new ItemStack(Material.CHEST_MINECART);
+        else if (minecart instanceof PoweredMinecart)
+            return new ItemStack(Material.FURNACE_MINECART);
+        else
+            return new ItemStack(Material.MINECART);
     }
 }

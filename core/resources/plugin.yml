@@ -10,3 +10,8 @@ permissions:
   mydrops.bypass.drop:
     description: Allow a player to drop items for anyone to pickup
     default: false
+commands:
+  mydrops:
+    description: Main command to manage all of your drops
+    usage: /mydrops [args]
+    permission: mydrops.commands.main

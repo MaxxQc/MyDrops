@@ -8,6 +8,8 @@ public class ConfigManager
 {
     private static FileConfiguration config;
 
+    private static String msgCmdPlayerOnly;
+
     public static void init(JavaPlugin plugin) {
         config = plugin.getConfig();
 
@@ -32,6 +34,9 @@ public class ConfigManager
         config.addDefault("protection.entity-kill.player-default", true);
         config.addDefault("protection.player-death.enable", false);
         config.addDefault("protection.player-death.player-default", false);
+
+        config.addDefault("messages.commands.player-only", "&cYou must be a player to use this command.");
+        config.addDefault("messages.commands.unknown", "&cUnknown subcommand &4&o{subcommand}");
 
         config.options().copyDefaults(true);
         plugin.saveConfig();
@@ -91,5 +96,18 @@ public class ConfigManager
     public static boolean hasBStats()
     {
         return config.getBoolean("options.enable-bstats", true);
+    }
+
+    public static String getMsgCmdPlayerOnly()
+    {
+        if (msgCmdPlayerOnly == null)
+            msgCmdPlayerOnly = Utils.colorize(config.getString("messages.commands.player-only", "You must be a player to use this command."));
+
+        return msgCmdPlayerOnly;
+    }
+
+    public static String getMsgCmdUnknownSub()
+    {
+        return config.getString("messages.commands.unknown", "&cUnknown subcommand &4&o{subcommand}");
     }
 }

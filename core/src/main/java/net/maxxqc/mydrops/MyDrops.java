@@ -1,5 +1,8 @@
 package net.maxxqc.mydrops;
 
+import net.maxxqc.mydrops.commands.CommandDispatcher;
+import net.maxxqc.mydrops.commands.CoreCommand;
+import net.maxxqc.mydrops.commands.GlowColorCommand;
 import net.maxxqc.mydrops.protection.*;
 import net.maxxqc.mydrops.utils.ConfigManager;
 import net.maxxqc.mydrops.utils.Utils;
@@ -9,13 +12,22 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public final class MyDrops extends JavaPlugin implements Listener
 {
-    private final int BSTATS_PLUGIN_ID = 19913;
-
     @Override
     public void onEnable()
     {
-        Utils.init(this, BSTATS_PLUGIN_ID);
+        Utils.init(this, 19913);
+        registerEventHandlers();
+        //registerCommands();
+    }
 
+    @Override
+    public void onDisable()
+    {
+        Utils.shutdown();
+    }
+
+    private void registerEventHandlers()
+    {
         Bukkit.getServer().getPluginManager().registerEvents(new ProtectionHandler(), this);
 
         if (ConfigManager.hasItemDropProtection())
@@ -40,9 +52,11 @@ public final class MyDrops extends JavaPlugin implements Listener
             Bukkit.getServer().getPluginManager().registerEvents(new PlayerDeathHandler(), this);
     }
 
-    @Override
-    public void onDisable()
+    private void registerCommands()
     {
-        Utils.shutdown();
+        CommandDispatcher handler = new CommandDispatcher();
+        handler.register("mydrops", new CoreCommand());
+        handler.register("glowcolor", new GlowColorCommand());
+        getCommand("mydrops").setExecutor(handler);
     }
 }

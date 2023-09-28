@@ -13,9 +13,6 @@
 
     <modules>
         <module>core</module>
-        <module>craftbukkit_v1_20_R1</module>
-        <module>craftbukkit_v1_20_R2</module>
-        <module>craftbukkit_v1_19_R1</module>
         <module>dist</module>
     </modules>
 
@@ -34,6 +31,11 @@
             <id>nexus</id>
             <name>Lumine Releases</name>
             <url>https://mvn.lumine.io/repository/maven-public/</url>
+        </repository>
+
+        <repository>
+            <id>iridiumdevelopment</id>
+            <url>https://nexus.iridiumdevelopment.net/repository/maven-releases/</url>
         </repository>
     </repositories>
 </project>
