@@ -60,8 +60,11 @@ public class Utils
 
         if (centerVersion >= 17 && ConfigManager.hasOptionGlow())
             if (!(centerVersion == 20 && version.split("_")[2].equals("R2")))
-                Utils.glowingEntities = new GlowingEntities(plugin);
-
+                try {
+                    Utils.glowingEntities = new GlowingEntities(plugin);
+                } catch (Exception e) {
+                    plugin.getLogger().info("Error loading GlowingEntities - Glowing is disabled");
+                }
 
         /*  try
         {

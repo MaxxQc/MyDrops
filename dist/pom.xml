@@ -112,6 +112,26 @@
                             </resources>
                         </configuration>
                     </execution>
+
+                    <execution>
+                        <id>copy-resource-to-1.18.2</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+
+                        <configuration>
+                            <outputDirectory>../tests/1.18.2/plugins</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>../target</directory>
+                                    <includes>
+                                        <include>MyDrops-${project.version}.jar</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
         </plugins>
