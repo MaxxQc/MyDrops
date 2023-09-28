@@ -1,5 +1,6 @@
 package net.maxxqc.mydrops.nms;
 
+import net.minecraft.world.entity.decoration.LeashFenceKnotEntity;
 import net.minecraft.world.entity.vehicle.AbstractMinecart;
 import net.minecraft.world.entity.vehicle.Boat;
 import org.bukkit.Material;
@@ -23,7 +24,6 @@ public class NMSHandler_v1_20_R2 implements NMSHandler
             return new ItemStack(Material.valueOf(
                     method.invoke(((CraftMinecart) vehicle).getHandle())
                             .toString().toUpperCase()));
-            //return CraftItemStack.asBukkitCopy((net.minecraft.world.item.ItemStack) method.invoke(((CraftMinecart) vehicle).getHandle()));
         }
         catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();

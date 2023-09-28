@@ -6,16 +6,31 @@ import org.bukkit.Material;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDropItemEvent;
 import org.bukkit.event.hanging.HangingBreakByEntityEvent;
+import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.inventory.ItemStack;
+
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class HangingBreakHandler implements Listener
 {
     @EventHandler
     private void onHangingBreak(HangingBreakByEntityEvent e)
     {
-        if (!(e.getRemover() instanceof Player) || ((Player) e.getRemover()).getGameMode() == GameMode.CREATIVE)
+        if (!(e.getRemover() instanceof Player))
             return;
+
+        if (e.getEntity() instanceof LeashHitch)
+        {
+            e.setCancelled(true);
+            handleLeash(e.getEntity(), e.getRemover().getUniqueId());
+            return;
+        }
+
+        if (((Player) e.getRemover()).getGameMode() == GameMode.CREATIVE) return;
 
         ItemStack is = null;
 
@@ -23,18 +38,46 @@ public class HangingBreakHandler implements Listener
             is = new ItemStack(Material.GLOW_ITEM_FRAME);
         else if (e.getEntity() instanceof ItemFrame)
             is = new ItemStack(Material.ITEM_FRAME);
-        else if (e.getEntity() instanceof LeashHitch)
-            is = new ItemStack(Material.LEAD);
         else if (e.getEntity() instanceof Painting)
             is = new ItemStack(Material.PAINTING);
 
         if (is == null) return;
 
-        if (e.getEntity() instanceof LeashHitch) return; //TODO remove when leash bug is fixed
-
         e.setCancelled(true);
         e.getEntity().remove();
         Utils.setItemStackOwner(is, e.getRemover().getUniqueId());
         e.getEntity().getWorld().dropItemNaturally(e.getEntity().getLocation(), is);
+    }
+
+    @EventHandler
+    public void onLeashDrop(EntityDropItemEvent e)
+    {
+        if (e.getItemDrop().getItemStack().getType() != Material.LEAD || !(Utils.parseLeashEntity(e.getEntity()))) return;
+        e.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onInteract(PlayerInteractAtEntityEvent e)
+    {
+        if (!(e.getRightClicked() instanceof LeashHitch)) return;
+        e.setCancelled(true);
+        handleLeash(e.getRightClicked(), e.getPlayer().getUniqueId());
+    }
+
+    private void handleLeash(Entity entity, UUID ownerUUID)
+    {
+        //https://www.spigotmc.org/threads/prevent-break-fence-if-animal-is-attached-to-it-code-works-but-is-it-correct.102571/
+        List<LivingEntity> attachedEntities = entity.getNearbyEntities(10, 10, 10).stream() // Creates the stream
+                .filter(ent -> ent instanceof LivingEntity) // Filters all entities that aren't living entities away.
+                .map(ent -> (LivingEntity) ent) // Converts the stream into a stream of living entities
+                .filter(LivingEntity::isLeashed) // Filters all of the unleashed entities away.
+                .filter(ent -> ent.getLeashHolder() instanceof LeashHitch) // Filters all non-LeashHitches away
+                .filter(ent -> ent.getLeashHolder().getUniqueId() == entity.getUniqueId())
+                .collect(Collectors.toList());
+        attachedEntities.forEach(Utils::markEntityForLeash);
+        ItemStack is = new ItemStack(Material.LEAD, attachedEntities.size());
+        entity.remove();
+        Utils.setItemStackOwner(is, ownerUUID);
+        entity.getWorld().dropItemNaturally(entity.getLocation(), is);
     }
 }

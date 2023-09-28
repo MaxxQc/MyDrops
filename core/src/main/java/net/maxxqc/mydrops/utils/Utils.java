@@ -19,6 +19,7 @@ public class Utils
     public static JavaPlugin plugin;
 
     private static final String MYDROPS_TAG = "mydrops-owner";
+    private static final String LEASH_TAG = "mydrops-leash";
 
     private static NamespacedKey namespaceKey;
     private static NMSHandler nmsHandler;
@@ -114,5 +115,19 @@ public class Utils
     {
         String value = entity.getPersistentDataContainer().get(namespaceKey, PersistentDataType.STRING);
         return value == null ? null : UUID.fromString(value);
+    }
+
+    public static void markEntityForLeash(Entity entity)
+    {
+        entity.setMetadata(LEASH_TAG, new FixedMetadataValue(plugin, "true"));
+    }
+
+    public static boolean parseLeashEntity(Entity entity)
+    {
+        if (!entity.hasMetadata(LEASH_TAG)) return false;
+
+        boolean value = entity.getMetadata(LEASH_TAG).get(0).value().equals("true");
+        entity.removeMetadata(LEASH_TAG, plugin);
+        return value;
     }
 }

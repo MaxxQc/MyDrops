@@ -69,6 +69,7 @@
             <scope>provided</scope>
             <classifier>remapped-mojang</classifier>
         </dependency>
+
         <dependency>
             <groupId>net.maxxqc</groupId>
             <artifactId>mydrops-core</artifactId>
