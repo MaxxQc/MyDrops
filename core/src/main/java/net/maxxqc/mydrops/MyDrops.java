@@ -9,10 +9,12 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public final class MyDrops extends JavaPlugin implements Listener
 {
+    private final int BSTATS_PLUGIN_ID = 19913;
+
     @Override
     public void onEnable()
     {
-        Utils.init(this);
+        Utils.init(this, BSTATS_PLUGIN_ID);
 
         Bukkit.getServer().getPluginManager().registerEvents(new ProtectionHandler(), this);
 

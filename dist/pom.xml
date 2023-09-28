@@ -21,18 +21,33 @@
 
     <build>
         <directory>../target</directory>
+        <finalName>MyDrops-${project.version}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <configuration>
-                    <finalName>MyDrops-${project.version}</finalName>
-                    <appendAssemblyId>false</appendAssemblyId>
-                </configuration>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.4.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <relocations>
+                                <relocation>
+                                    <pattern>org.bstats</pattern>
+                                    <shadedPattern>net.maxxqc.mydrops</shadedPattern>
+                                </relocation>
+                            </relocations>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <artifactId>maven-resources-plugin</artifactId>
@@ -100,30 +115,6 @@
                 </executions>
             </plugin>
         </plugins>
-
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-assembly-plugin</artifactId>
-                    <version>${maven.assembly.plugin.version}</version>
-                    <configuration>
-                        <descriptorRefs>
-                            <descriptorRef>jar-with-dependencies</descriptorRef>
-                        </descriptorRefs>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <id>make-assembly</id>
-                            <phase>package</phase>
-                            <goals>
-                                <goal>single</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-            </plugins>
-        </pluginManagement>
     </build>
 
     <dependencies>
@@ -131,21 +122,25 @@
             <groupId>net.maxxqc</groupId>
             <artifactId>mydrops-core</artifactId>
             <version>${project.parent.version}</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>net.maxxqc</groupId>
             <artifactId>mydrops-craftbukkit_v1_19_R1</artifactId>
             <version>${project.parent.version}</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>net.maxxqc</groupId>
             <artifactId>mydrops-craftbukkit_v1_20_R1</artifactId>
             <version>${project.parent.version}</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>net.maxxqc</groupId>
             <artifactId>mydrops-craftbukkit_v1_20_R2</artifactId>
             <version>${project.parent.version}</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 </project>

@@ -16,6 +16,7 @@ public class ConfigManager
         config.addDefault("options.per-player-glow", true);
         config.addDefault("options.per-player-protection", false);
         config.addDefault("options.database-format", "file");
+        config.addDefault("options.enable-bstats", true);
 
         config.addDefault("protection.item-drop.enable", true);
         config.addDefault("protection.item-drop.player-default", true);
@@ -37,7 +38,7 @@ public class ConfigManager
     }
 
     public static boolean hasOptionGlow() {
-        return config.getBoolean("options.glow");
+        return config.getBoolean("options.glow", true);
     }
 
     private static ChatColor glowColor;
@@ -47,7 +48,7 @@ public class ConfigManager
         {
             try
             {
-                glowColor = ChatColor.valueOf(config.getString("options.default-glow-color").toUpperCase());
+                glowColor = ChatColor.valueOf(config.getString("options.default-glow-color", "AQUA").toUpperCase());
             }
             catch (Exception e)
             {
@@ -60,30 +61,35 @@ public class ConfigManager
     }
 
     public static boolean hasItemDropProtection() {
-        return config.getBoolean("protection.item-drop.enable");
+        return config.getBoolean("protection.item-drop.enable", true);
     }
 
     public static boolean hasBlockBreakProtection() {
-        return config.getBoolean("protection.block-break.enable");
+        return config.getBoolean("protection.block-break.enable", true);
     }
 
     public static boolean hasVehicleDestroyProtection() {
-        return config.getBoolean("protection.vehicle-destroy.enable");
+        return config.getBoolean("protection.vehicle-destroy.enable", true);
     }
 
     public static boolean hasHangingBreakProtection() {
-        return config.getBoolean("protection.hanging-break.enable");
+        return config.getBoolean("protection.hanging-break.enable", true);
     }
 
     public static boolean hasItemFrameDropProtection() {
-        return config.getBoolean("protection.item-frame-drop.enable");
+        return config.getBoolean("protection.item-frame-drop.enable", true);
     }
 
     public static boolean hasEntityKillProtection() {
-        return config.getBoolean("protection.entity-kill.enable");
+        return config.getBoolean("protection.entity-kill.enable", true);
     }
 
     public static boolean hasPlayerDeathProtection() {
-        return config.getBoolean("protection.player-death.enable");
+        return config.getBoolean("protection.player-death.enable", false);
+    }
+
+    public static boolean hasBStats()
+    {
+        return config.getBoolean("options.enable-bstats", true);
     }
 }
