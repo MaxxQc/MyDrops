@@ -10,8 +10,14 @@ permissions:
   mydrops.bypass.drop:
     description: Allow a player to drop items for anyone to pickup
     default: false
+  mydrops.command.core:
+    description: Gives access to the /mydrops command
+    default: true
+  mydrops.command.glowcolor:
+    description: Give access to the /mydrops glowcolor command
+    default: true
 commands:
   mydrops:
     description: Main command to manage all of your drops
     usage: /mydrops [args]
-    permission: mydrops.commands.main
+    permission: mydrops.command.core

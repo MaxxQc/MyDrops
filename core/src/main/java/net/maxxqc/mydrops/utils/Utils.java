@@ -5,6 +5,7 @@ import fr.skytasul.glowingentities.GlowingEntities;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SimplePie;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
@@ -34,6 +35,7 @@ public class Utils
         Utils.plugin = plugin;
         namespaceKey = new NamespacedKey(plugin, MYDROPS_TAG);
         ConfigManager.init(plugin);
+        PlayerDataManager.init(plugin);
 
         if (ConfigManager.hasBStats())
         {
@@ -82,11 +84,13 @@ public class Utils
 
         item.getPersistentDataContainer().set(namespaceKey, PersistentDataType.STRING, player.getUniqueId().toString());
 
-        if (glowingEntities == null) return;
+        if (!ConfigManager.hasOptionGlow() || glowingEntities == null) return;
 
         try
         {
-            glowingEntities.setGlowing(item, player, ConfigManager.getGlowColor());
+            ChatColor color = ConfigManager.hasPerPlayerGlow() ? PlayerDataManager.getGlowColor(player) : ConfigManager.getGlowColor();
+            if (color == null) return;
+            glowingEntities.setGlowing(item, player, color);
         } catch (ReflectiveOperationException ex) {
             ex.printStackTrace();
         }

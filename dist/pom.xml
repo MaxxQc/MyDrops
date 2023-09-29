@@ -5,13 +5,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>dist</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
     <packaging>jar</packaging>
 
     <parent>
         <groupId>net.maxxqc</groupId>
         <artifactId>mydrops-parent</artifactId>
-        <version>1.1</version>
+        <version>1.2</version>
     </parent>
 
     <properties>

@@ -8,6 +8,8 @@ public class ConfigManager
 {
     private static FileConfiguration config;
 
+    private static DatabaseType databaseType;
+
     private static String msgCmdPlayerOnly;
 
     public static void init(JavaPlugin plugin) {
@@ -37,9 +39,20 @@ public class ConfigManager
 
         config.addDefault("messages.commands.player-only", "&cYou must be a player to use this command.");
         config.addDefault("messages.commands.unknown", "&cUnknown subcommand &4&o{subcommand}");
+        config.addDefault("messages.commands.no-permission", "&cYou do not have permission to execute subcommand &4&o{subcommand}");
+        config.addDefault("messages.commands.glow.set", "&eGlow color set to &o{color}");
+        config.addDefault("messages.commands.glow.invalid", "&eGlow color &o&6{color}&e is not valid");
 
         config.options().copyDefaults(true);
         plugin.saveConfig();
+    }
+
+    public static DatabaseType getDatabaseType()
+    {
+        if (databaseType == null)
+            databaseType = DatabaseType.valueOf(config.getString("options.database-format", "file").toUpperCase());
+
+        return databaseType;
     }
 
     public static boolean hasOptionGlow() {
@@ -63,6 +76,11 @@ public class ConfigManager
         }
 
         return glowColor;
+    }
+
+    public static boolean hasPerPlayerGlow()
+    {
+        return config.getBoolean("options.glow", true) && config.getBoolean("options.per-player-glow", true);
     }
 
     public static boolean hasItemDropProtection() {
@@ -109,5 +127,20 @@ public class ConfigManager
     public static String getMsgCmdUnknownSub()
     {
         return config.getString("messages.commands.unknown", "&cUnknown subcommand &4&o{subcommand}");
+    }
+
+    public static String getMsgCmdNoPermission()
+    {
+        return config.getString("messages.commands.no-permission", "&cYou do not have permission to execute subcommand &4&o{subcommand}");
+    }
+
+    public static String getMsgCmdGlowSet()
+    {
+        return config.getString("messages.commands.glow.set", "&eGlow color set to &o{color}");
+    }
+
+    public static String getMsgCmdGlowInvalid()
+    {
+        return config.getString("messages.commands.glow.invalid", "&eGlow color &o&6{color}&e is not valid");
     }
 }
