@@ -21,7 +21,10 @@ public class PlayerDataManager
         if (ConfigManager.getDatabaseType() == DatabaseType.FILE)
         {
             configFile = new File(plugin.getDataFolder(), "players.yml");
-            plugin.saveResource("players.yml", false);
+
+            if (!configFile.exists())
+                plugin.saveResource("players.yml", false);
+
             config = YamlConfiguration.loadConfiguration(new InputStreamReader(plugin.getResource("players.yml")));
             saveFile();
         }
