@@ -82,6 +82,19 @@ public class Utils
     {
         if (player == null || player.hasPermission("mydrops.bypass.drop")) return;
 
+        if (ConfigManager.isWorldListBlacklist())
+        {
+            //blacklist
+            if (ConfigManager.getWorldList().contains(item.getWorld().getName()))
+                return;
+        }
+        else
+        {
+            //whitelist
+            if (!ConfigManager.getWorldList().contains(item.getWorld().getName()))
+                return;
+        }
+
         item.getPersistentDataContainer().set(namespaceKey, PersistentDataType.STRING, player.getUniqueId().toString());
         item.setInvulnerable(ConfigManager.hasOptionInvulnerable());
         item.setPickupDelay(ConfigManager.getPickupDelay() * 20);

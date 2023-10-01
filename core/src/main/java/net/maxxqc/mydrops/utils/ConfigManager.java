@@ -4,6 +4,9 @@ import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.Collections;
+import java.util.List;
+
 public class ConfigManager
 {
     private static FileConfiguration config;
@@ -22,6 +25,9 @@ public class ConfigManager
         config.addDefault("options.per-player-protection", false);
         config.addDefault("options.database-format", "file");
         config.addDefault("options.enable-bstats", true);
+
+        config.addDefault("worlds.is-blacklist", true);
+        config.addDefault("worlds.list", Collections.singletonList("someworld"));
 
         config.addDefault("protection.item-drop.enable", true);
         config.addDefault("protection.item-drop.player-default", true);
@@ -156,5 +162,15 @@ public class ConfigManager
     public static boolean hasPerPlayerProtection()
     {
         return config.getBoolean("options.per-player-protection", false);
+    }
+
+    public static boolean isWorldListBlacklist()
+    {
+        return config.getBoolean("worlds.is-blacklist", true);
+    }
+
+    public static List<String> getWorldList()
+    {
+        return config.getStringList("worlds.list");
     }
 }
