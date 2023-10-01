@@ -83,6 +83,8 @@ public class Utils
         if (player == null || player.hasPermission("mydrops.bypass.drop")) return;
 
         item.getPersistentDataContainer().set(namespaceKey, PersistentDataType.STRING, player.getUniqueId().toString());
+        item.setInvulnerable(ConfigManager.hasOptionInvulnerable());
+        item.setPickupDelay(ConfigManager.getPickupDelay() * 20);
 
         if (!ConfigManager.hasOptionGlow() || glowingEntities == null) return;
 

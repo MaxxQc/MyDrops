@@ -7,15 +7,16 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class ConfigManager
 {
     private static FileConfiguration config;
-
     private static DatabaseType databaseType;
-
     private static String msgCmdPlayerOnly;
+    private static ChatColor glowColor;
 
     public static void init(JavaPlugin plugin) {
         config = plugin.getConfig();
 
         config.addDefault("options.glow", true);
+        config.addDefault("options.invulnerable", false);
+        config.addDefault("options.pickup-delay", 0);
         config.addDefault("options.default-glow-color", "AQUA");
         config.addDefault("options.per-player-glow", true);
         config.addDefault("options.per-player-protection", false);
@@ -59,7 +60,15 @@ public class ConfigManager
         return config.getBoolean("options.glow", true);
     }
 
-    private static ChatColor glowColor;
+    public static boolean hasOptionInvulnerable()
+    {
+        return config.getBoolean("options.invulnerable", false);
+    }
+
+    public static int getPickupDelay()
+    {
+        return config.getInt("options.pickup-delay", 0);
+    }
 
     public static ChatColor getGlowColor() {
         if (glowColor == null)
