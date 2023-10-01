@@ -15,12 +15,6 @@ public class GlowColorCommand implements CommandInterface
     {
         Player player = (Player) sender;
 
-        if (!player.hasPermission("mydrops.command.glowcolor"))
-        {
-            player.sendMessage(Utils.colorize(ConfigManager.getMsgCmdNoPermission().replaceAll("\\{subcommand}", args[0].toLowerCase())));
-            return true;
-        }
-
         //Si args == 1 on ouvre le menu si == 2 alors on définit la couleur
         //if (args.length > 2)
         //{
@@ -61,5 +55,11 @@ public class GlowColorCommand implements CommandInterface
         }
 
         return true;
+    }
+
+    @Override
+    public String getPermission()
+    {
+        return "mydrops.command.glowcolor";
     }
 }

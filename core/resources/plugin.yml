@@ -16,6 +16,9 @@ permissions:
   mydrops.command.glowcolor:
     description: Give access to the /mydrops glowcolor command
     default: true
+  mydrops.command.protection:
+    description: Give access to the /mydrops protection command
+    default: false
 commands:
   mydrops:
     description: Main command to manage all of your drops

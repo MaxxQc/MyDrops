@@ -3,11 +3,11 @@ package net.maxxqc.mydrops;
 import net.maxxqc.mydrops.commands.CommandDispatcher;
 import net.maxxqc.mydrops.commands.CoreCommand;
 import net.maxxqc.mydrops.commands.GlowColorCommand;
+import net.maxxqc.mydrops.commands.ProtectionCommand;
 import net.maxxqc.mydrops.protection.*;
 import net.maxxqc.mydrops.utils.ConfigManager;
 import net.maxxqc.mydrops.utils.Utils;
 import org.bukkit.Bukkit;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -61,6 +61,9 @@ public final class MyDrops extends JavaPlugin implements Listener
 
         if (ConfigManager.hasPerPlayerGlow())
             handler.register("glowcolor", new GlowColorCommand());
+
+        if (ConfigManager.hasPerPlayerProtection())
+            handler.register("protection", new ProtectionCommand());
 
         getCommand("mydrops").setExecutor(handler);
         getCommand("mydrops").setTabCompleter(coreCmd);

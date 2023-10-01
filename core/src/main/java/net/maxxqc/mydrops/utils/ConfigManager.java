@@ -152,4 +152,9 @@ public class ConfigManager
     {
         return config.getString("messages.commands.glow.invalid", "&eGlow color &o&6{color}&e is not valid");
     }
+
+    public static boolean hasPerPlayerProtection()
+    {
+        return config.getBoolean("options.per-player-protection", false);
+    }
 }

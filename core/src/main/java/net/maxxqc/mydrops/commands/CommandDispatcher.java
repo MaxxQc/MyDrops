@@ -37,15 +37,38 @@ public class CommandDispatcher implements CommandExecutor
             return true;
         }
 
-        if (args.length == 0) {
-            getExecutor("mydrops").onCommand(sender, command, label, args);
+        if (args.length == 0)
+        {
+            CommandInterface interf = getExecutor("mydrops");
+            if (sender.hasPermission(interf.getPermission()))
+            {
+                interf.onCommand(sender, command, label, args);
+            }
+            else
+            {
+                sender.sendMessage(IridiumColorAPI.process(ConfigManager.getMsgCmdNoPermission().replaceAll("\\{subcommand}", "mydrops")));
+            }
+
             return true;
         }
 
-        if (exists(args[0])) {
-            getExecutor(args[0]).onCommand(sender, command, label, args);
+        if (exists(args[0]))
+        {
+            CommandInterface inter = getExecutor(args[0]);
+
+            if (sender.hasPermission(inter.getPermission()))
+            {
+                inter.onCommand(sender, command, label, args);
+            }
+            else
+            {
+                sender.sendMessage(IridiumColorAPI.process(ConfigManager.getMsgCmdNoPermission().replaceAll("\\{subcommand}", args[0].toLowerCase())));
+            }
+
             return true;
-        } else {
+        }
+        else
+        {
             sender.sendMessage(IridiumColorAPI.process(ConfigManager.getMsgCmdUnknownSub().replaceAll("\\{subcommand}", args[0].toLowerCase())));
             return true;
         }

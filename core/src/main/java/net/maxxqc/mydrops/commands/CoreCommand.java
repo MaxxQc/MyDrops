@@ -1,6 +1,7 @@
 package net.maxxqc.mydrops.commands;
 
 import net.maxxqc.mydrops.utils.ConfigManager;
+import net.maxxqc.mydrops.utils.ProtectionTypes;
 import net.maxxqc.mydrops.utils.Utils;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -9,9 +10,7 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.bukkit.util.StringUtil;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class CoreCommand implements CommandInterface, TabCompleter
@@ -46,15 +45,42 @@ public class CoreCommand implements CommandInterface, TabCompleter
     }
 
     @Override
+    public String getPermission()
+    {
+        return "mydrops.command.core";
+    }
+
+    @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args)
     {
         List<String> completions = new ArrayList<>();
 
-        if (args.length == 1 && sender.hasPermission("mydrops.command.glowcolor"))
-            StringUtil.copyPartialMatches(args[0], Arrays.asList("glowcolor"), completions);
+        if (args.length == 1)
+        {
+            if (sender.hasPermission("mydrops.command.glowcolor"))
+                StringUtil.copyPartialMatches(args[0], Collections.singletonList("glowcolor"), completions);
 
-        if (args.length == 2 && args[0].equalsIgnoreCase("glowcolor") && sender.hasPermission("mydrops.command.glowcolor"))
-            StringUtil.copyPartialMatches(args[1], ALL_COLORS, completions);
+            if (sender.hasPermission("mydrops.command.protection"))
+                StringUtil.copyPartialMatches(args[0], Collections.singletonList("protection"), completions);
+        }
+        else if (args.length == 2)
+        {
+            if (args[0].equalsIgnoreCase("glowcolor") && sender.hasPermission("mydrops.command.glowcolor"))
+                StringUtil.copyPartialMatches(args[1], ALL_COLORS, completions);
+            else if (args[0].equalsIgnoreCase("protection") && sender.hasPermission("mydrops.command.protection"))
+            {
+                List<String> col = Arrays.stream(ProtectionTypes.values()).map(Enum::toString).collect(Collectors.toList());
+                col.add("list");
+                StringUtil.copyPartialMatches(args[1], col, completions);
+            }
+        }
+        else if (args.length == 3)
+        {
+            if (args[0].equalsIgnoreCase("protection") && sender.hasPermission("mydrops.command.protection") && !args[1].equalsIgnoreCase("list"))
+            {
+                StringUtil.copyPartialMatches(args[2], Arrays.asList("true", "false"), completions);
+            }
+        }
 
         return completions;
     }
