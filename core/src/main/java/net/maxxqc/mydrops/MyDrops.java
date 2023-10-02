@@ -4,21 +4,50 @@ import net.maxxqc.mydrops.commands.CommandDispatcher;
 import net.maxxqc.mydrops.commands.CoreCommand;
 import net.maxxqc.mydrops.commands.GlowColorCommand;
 import net.maxxqc.mydrops.commands.ProtectionCommand;
+import net.maxxqc.mydrops.events.AutoUpdaterHandler;
 import net.maxxqc.mydrops.protection.*;
 import net.maxxqc.mydrops.utils.ConfigManager;
+import net.maxxqc.mydrops.utils.Constants;
+import net.maxxqc.mydrops.utils.SpigetUpdater;
 import net.maxxqc.mydrops.utils.Utils;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 public final class MyDrops extends JavaPlugin implements Listener
 {
     @Override
     public void onEnable()
     {
-        Utils.init(this, 19913);
+        Utils.init(this);
         registerEventHandlers();
         registerCommands();
+
+        if (!ConfigManager.hasAutoUpdateChecker()) return;
+
+        Constants.setCurrentVersion(getDescription().getVersion());
+        SpigetUpdater updater = new SpigetUpdater(getDescription().getVersion());
+        BukkitRunnable updaterRunnable = new BukkitRunnable() {
+            @Override
+            public void run()
+            {
+                if (updater.checkForUpdate())
+                {
+                    Constants.markUpdateAvailable(updater.getUpdatedVersion());
+
+                    Bukkit.getConsoleSender().sendMessage(Utils.colorize("------------------------------------------------------------------------"));
+                    Bukkit.getConsoleSender().sendMessage("A new update is avaiable for MyDrops");
+                    Bukkit.getConsoleSender().sendMessage("Current version: " + Constants.CURRENT_VERSION);
+                    Bukkit.getConsoleSender().sendMessage("Latest version: " + Constants.UPDATER_NEW_VERSION);
+                    Bukkit.getConsoleSender().sendMessage("Download on https://www.spigotmc.org/resources/mydrops." + Constants.SPIGOT_RESOURCE_ID + "/");
+                    Bukkit.getConsoleSender().sendMessage(Utils.colorize("------------------------------------------------------------------------"));
+
+                    cancel();
+                }
+            }
+        };
+        updaterRunnable.runTaskTimerAsynchronously(this, 0L, 600L);
     }
 
     @Override
@@ -51,6 +80,9 @@ public final class MyDrops extends JavaPlugin implements Listener
 
         if (ConfigManager.hasPlayerDeathProtection())
             Bukkit.getServer().getPluginManager().registerEvents(new PlayerDeathHandler(), this);
+
+        if (ConfigManager.hasAutoUpdateChecker())
+            Bukkit.getServer().getPluginManager().registerEvents(new AutoUpdaterHandler(), this);
     }
 
     private void registerCommands()

@@ -30,7 +30,7 @@ public class Utils
     //private static NMSHandler nmsHandler;
     private static GlowingEntities glowingEntities;
 
-    public static void init(JavaPlugin plugin, int pluginId)
+    public static void init(JavaPlugin plugin)
     {
         Utils.plugin = plugin;
         namespaceKey = new NamespacedKey(plugin, MYDROPS_TAG);
@@ -39,7 +39,7 @@ public class Utils
 
         if (ConfigManager.hasBStats())
         {
-            Metrics metrics = new Metrics(plugin, pluginId);
+            Metrics metrics = new Metrics(plugin, Constants.BSTATS_PLUGIN_ID);
             metrics.addCustomChart(new SimplePie("option_glow", () -> String.valueOf(ConfigManager.hasOptionGlow())));
 
             if (ConfigManager.hasOptionGlow())

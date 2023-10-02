@@ -39,7 +39,10 @@ public class CoreCommand implements CommandInterface, TabCompleter
         player.sendMessage(Utils.colorize("&6/mydrops &e - Shows this help menu"));
 
         if (ConfigManager.hasPerPlayerGlow() && player.hasPermission("mydrops.command.glowcolor"))
-            player.sendMessage(Utils.colorize("&6/mydrops glowcolor [color]&e - Defines a new glowing color"));
+            player.sendMessage(Utils.colorize("&6/mydrops glowcolor [color]&e - Defines a new glowing color for yourself"));
+
+        if (ConfigManager.hasPerPlayerProtection() && player.hasPermission("mydrops.command.protection"))
+            player.sendMessage(Utils.colorize("&6/mydrops protection <protection type> <true/false>&e - Toggles a protection rule for yourself"));
 
         return true;
     }
@@ -74,6 +77,7 @@ public class CoreCommand implements CommandInterface, TabCompleter
                 StringUtil.copyPartialMatches(args[1], col, completions);
             }
         }
+        //TODO protection only return enabled protection on server
         else if (args.length == 3)
         {
             if (args[0].equalsIgnoreCase("protection") && sender.hasPermission("mydrops.command.protection") && !args[1].equalsIgnoreCase("list"))

@@ -19,6 +19,9 @@ permissions:
   mydrops.command.protection:
     description: Give access to the /mydrops protection command
     default: false
+  mydrops.update:
+    description: Anyone with this permission will receive informations from the updater when a new version is available
+    default: op
 commands:
   mydrops:
     description: Main command to manage all of your drops

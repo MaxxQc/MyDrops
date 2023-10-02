@@ -25,6 +25,7 @@ public class ConfigManager
         config.addDefault("options.per-player-protection", false);
         config.addDefault("options.database-format", "file");
         config.addDefault("options.enable-bstats", true);
+        config.addDefault("options.enable-auto-update-checker", true);
 
         config.addDefault("worlds.is-blacklist", true);
         config.addDefault("worlds.list", Collections.singletonList("someworld"));
@@ -161,7 +162,7 @@ public class ConfigManager
 
     public static boolean hasPerPlayerProtection()
     {
-        return config.getBoolean("options.per-player-protection", false);
+        return false; //TODO config.getBoolean("options.per-player-protection", false);
     }
 
     public static boolean isWorldListBlacklist()
@@ -172,5 +173,10 @@ public class ConfigManager
     public static List<String> getWorldList()
     {
         return config.getStringList("worlds.list");
+    }
+
+    public static boolean hasAutoUpdateChecker()
+    {
+        return config.getBoolean("options.enable-auto-update-checker", true);
     }
 }
