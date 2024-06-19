@@ -19,9 +19,9 @@ public class AutoUpdaterHandler implements Listener
         BaseComponent component = new TextComponent(new ComponentBuilder( "A new update is avaiable for ").color(ChatColor.YELLOW)
                 .append("MyDrops\n").color(ChatColor.GOLD).bold(true)
                 .append("Current version: ").color(ChatColor.YELLOW).bold(false)
-                .append("" + Constants.CURRENT_VERSION + "\n").color(ChatColor.GOLD)
+                .append(Constants.CURRENT_VERSION + "\n").color(ChatColor.GOLD)
                 .append("Latest version: ").color(ChatColor.YELLOW)
-                .append("" + Constants.UPDATER_NEW_VERSION + "\n").color(ChatColor.GOLD)
+                .append(Constants.UPDATER_NEW_VERSION + "\n").color(ChatColor.GOLD)
                 .append("Download on ").color(ChatColor.YELLOW)
                 .append("https://spigotmc.org/").color(ChatColor.GOLD)
                 .create());

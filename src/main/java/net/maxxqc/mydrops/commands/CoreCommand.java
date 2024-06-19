@@ -44,6 +44,9 @@ public class CoreCommand implements CommandInterface, TabCompleter
         if (ConfigManager.hasPerPlayerProtection() && player.hasPermission("mydrops.command.protection"))
             player.sendMessage(Utils.colorize("&6/mydrops protection <protection type> <true/false>&e - Toggles a protection rule for yourself"));
 
+        if (player.hasPermission("mydrops.command.trash"))
+            player.sendMessage(Utils.colorize("&6/mydrops trash &e - Opens up a trash bin container"));
+
         return true;
     }
 
@@ -65,6 +68,9 @@ public class CoreCommand implements CommandInterface, TabCompleter
 
             if (sender.hasPermission("mydrops.command.protection"))
                 StringUtil.copyPartialMatches(args[0], Collections.singletonList("protection"), completions);
+
+            if (sender.hasPermission("mydrops.command.trash"))
+                StringUtil.copyPartialMatches(args[0], Collections.singletonList("trash"), completions);
         }
         else if (args.length == 2)
         {

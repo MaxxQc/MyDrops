@@ -1,9 +1,6 @@
 package net.maxxqc.mydrops;
 
-import net.maxxqc.mydrops.commands.CommandDispatcher;
-import net.maxxqc.mydrops.commands.CoreCommand;
-import net.maxxqc.mydrops.commands.GlowColorCommand;
-import net.maxxqc.mydrops.commands.ProtectionCommand;
+import net.maxxqc.mydrops.commands.*;
 import net.maxxqc.mydrops.events.AutoUpdaterHandler;
 import net.maxxqc.mydrops.protection.*;
 import net.maxxqc.mydrops.utils.ConfigManager;
@@ -81,6 +78,11 @@ public final class MyDrops extends JavaPlugin implements Listener
         if (ConfigManager.hasPlayerDeathProtection())
             Bukkit.getServer().getPluginManager().registerEvents(new PlayerDeathHandler(), this);
 
+        if (ConfigManager.hasMythicMobsProtection() && getServer().getPluginManager().isPluginEnabled("MythicMobs")) {
+            getLogger().info("MythicMobs is enabled, hooking into it for event handling");
+            Bukkit.getServer().getPluginManager().registerEvents(new MythicMobsHandler(), this);
+        }
+
         if (ConfigManager.hasAutoUpdateChecker())
             Bukkit.getServer().getPluginManager().registerEvents(new AutoUpdaterHandler(), this);
     }
@@ -94,8 +96,10 @@ public final class MyDrops extends JavaPlugin implements Listener
         if (ConfigManager.hasPerPlayerGlow())
             handler.register("glowcolor", new GlowColorCommand());
 
-        if (ConfigManager.hasPerPlayerProtection())
-            handler.register("protection", new ProtectionCommand());
+        //if (ConfigManager.hasPerPlayerProtection()) TODO
+        //    handler.register("protection", new ProtectionCommand());
+
+        handler.register("trash", new TrashCommand());
 
         getCommand("mydrops").setExecutor(handler);
         getCommand("mydrops").setTabCompleter(coreCmd);

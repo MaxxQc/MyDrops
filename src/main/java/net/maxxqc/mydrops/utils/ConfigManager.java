@@ -12,6 +12,9 @@ public class ConfigManager
     private static FileConfiguration config;
     private static DatabaseType databaseType;
     private static String msgCmdPlayerOnly;
+    private static String msgCmdTrashTitle;
+    private static String txtConfirmYes;
+    private static String txtConfirmNo;
     private static ChatColor glowColor;
 
     public static void init(JavaPlugin plugin) {
@@ -26,6 +29,7 @@ public class ConfigManager
         config.addDefault("options.database-format", "file");
         config.addDefault("options.enable-bstats", true);
         config.addDefault("options.enable-auto-update-checker", true);
+        config.addDefault("options.trash-confirm-close", true);
 
         config.addDefault("worlds.is-blacklist", true);
         config.addDefault("worlds.list", Collections.singletonList("someworld"));
@@ -44,12 +48,18 @@ public class ConfigManager
         config.addDefault("protection.entity-kill.player-default", true);
         config.addDefault("protection.player-death.enable", false);
         config.addDefault("protection.player-death.player-default", false);
+        config.addDefault("protection.mythic-mobs.enable", true);
+        config.addDefault("protection.mythic-mobs.player-default", true);
 
         config.addDefault("messages.commands.player-only", "&cYou must be a player to use this command.");
         config.addDefault("messages.commands.unknown", "&cUnknown subcommand &4&o{subcommand}");
         config.addDefault("messages.commands.no-permission", "&cYou do not have permission to execute subcommand &4&o{subcommand}");
         config.addDefault("messages.commands.glow.set", "&eGlow color set to &o{color}");
         config.addDefault("messages.commands.glow.invalid", "&eGlow color &o&6{color}&e is not valid");
+        config.addDefault("messages.commands.trash.container-title", "&cTrash bin");
+        config.addDefault("messages.gui.confirmation.title", "&6Confirm?");
+        config.addDefault("messages.gui.confirmation.yes", "&aProceed");
+        config.addDefault("messages.gui.confirmation.no", "&cCancel");
 
         config.options().copyDefaults(true);
         plugin.saveConfig();
@@ -127,6 +137,10 @@ public class ConfigManager
         return config.getBoolean("protection.player-death.enable", false);
     }
 
+    public static boolean hasMythicMobsProtection() {
+        return config.getBoolean("protection.mythic-mobs.enable", true);
+    }
+
     public static boolean hasBStats()
     {
         return config.getBoolean("options.enable-bstats", true);
@@ -138,6 +152,14 @@ public class ConfigManager
             msgCmdPlayerOnly = Utils.colorize(config.getString("messages.commands.player-only", "You must be a player to use this command."));
 
         return msgCmdPlayerOnly;
+    }
+
+    public static String getMsgCmdTrashTitle()
+    {
+        if (msgCmdTrashTitle == null)
+            msgCmdTrashTitle = Utils.colorize(config.getString("messages.commands.trash.container-title", "&cTrash bin"));
+
+        return msgCmdTrashTitle;
     }
 
     public static String getMsgCmdUnknownSub()
@@ -178,5 +200,21 @@ public class ConfigManager
     public static boolean hasAutoUpdateChecker()
     {
         return config.getBoolean("options.enable-auto-update-checker", true);
+    }
+
+    public static String getTxtConfirmYes()
+    {
+        if (txtConfirmYes == null)
+            txtConfirmYes = Utils.colorize(config.getString("messages.gui.confirmation.yes", "&aProceed"));
+
+        return txtConfirmYes;
+    }
+
+    public static String getTxtConfirmNo()
+    {
+        if (txtConfirmNo == null)
+            txtConfirmNo = Utils.colorize(config.getString("messages.gui.confirmation.no", "&cCancel"));
+
+        return txtConfirmNo;
     }
 }
