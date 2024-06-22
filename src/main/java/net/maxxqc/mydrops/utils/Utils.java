@@ -42,8 +42,9 @@ public class Utils
             Metrics metrics = new Metrics(plugin, Constants.BSTATS_PLUGIN_ID);
             metrics.addCustomChart(new SimplePie("option_glow", () -> String.valueOf(ConfigManager.hasOptionGlow())));
 
-            if (ConfigManager.hasOptionGlow())
+            if (ConfigManager.hasOptionGlow()) {
                 metrics.addCustomChart(new SimplePie("option_glowcolor", () -> ConfigManager.getGlowColor().toString()));
+            }
 
             metrics.addCustomChart(new SimplePie("protection_item-drop", () -> String.valueOf(ConfigManager.hasItemDropProtection())));
             metrics.addCustomChart(new SimplePie("protection_block-break", () -> String.valueOf(ConfigManager.hasBlockBreakProtection())));
@@ -67,15 +68,6 @@ public class Utils
                 } catch (Exception e) {
                     plugin.getLogger().info("Error loading GlowingEntities - Glowing is disabled");
                 }
-
-        /*  try
-        {
-            Utils.nmsHandler = (NMSHandler) Class.forName("net.maxxqc.mydrops.nms.NMSHandler_v" + version).newInstance();
-        }
-        catch (ClassNotFoundException e)
-        {
-            e.printStackTrace();
-        } */
     }
 
     public static void handleItemDrop(Item item, Player player)
