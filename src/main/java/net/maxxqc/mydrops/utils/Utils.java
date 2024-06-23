@@ -1,7 +1,6 @@
 package net.maxxqc.mydrops.utils;
 
 import com.iridium.iridiumcolorapi.IridiumColorAPI;
-import fr.skytasul.glowingentities.GlowingEntities;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SimplePie;
 import org.bukkit.Bukkit;
@@ -16,6 +15,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scoreboard.Team;
 
 import java.util.UUID;
 
@@ -25,10 +25,9 @@ public class Utils
 
     private static final String MYDROPS_TAG = "mydrops-owner";
     private static final String LEASH_TAG = "mydrops-leash";
+    private static final String TEAM_PREFIX_GLOW = "MYDROPS_DO_NOT_TOUCH_";
 
     private static NamespacedKey namespaceKey;
-    //private static NMSHandler nmsHandler;
-    private static GlowingEntities glowingEntities;
 
     public static void init(JavaPlugin plugin)
     {
@@ -56,18 +55,20 @@ public class Utils
 
             plugin.getLogger().info("Successfully loaded bStats");
         }
+    }
 
-        String version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3].substring(1);
-        String[] verSplit = version.split("_");
-        int centerVersion = Integer.parseInt(verSplit[1]);
+    public static void createGlowingTeams(Player player) {
+        for (ChatColor color : ChatColor.values()) {
+            if (!color.isFormat() && color != ChatColor.RESET) {
+                Team team = player.getScoreboard().getTeam(TEAM_PREFIX_GLOW + color.name());
 
-        if (centerVersion >= 17 && ConfigManager.hasOptionGlow())
-            if (!(centerVersion == 20 && version.split("_")[2].equals("R2")))
-                try {
-                    Utils.glowingEntities = new GlowingEntities(plugin);
-                } catch (Exception e) {
-                    plugin.getLogger().info("Error loading GlowingEntities - Glowing is disabled");
+                if (team == null) {
+                    team = player.getScoreboard().registerNewTeam(TEAM_PREFIX_GLOW + color.name());
                 }
+
+                team.setColor(color);
+            }
+        }
     }
 
     public static void handleItemDrop(Item item, Player player)
@@ -89,24 +90,19 @@ public class Utils
 
         item.getPersistentDataContainer().set(namespaceKey, PersistentDataType.STRING, player.getUniqueId().toString());
         item.setInvulnerable(ConfigManager.hasOptionInvulnerable());
-        item.setPickupDelay(ConfigManager.getPickupDelay() * 20);
 
-        if (!ConfigManager.hasOptionGlow() || glowingEntities == null) return;
-
-        try
-        {
-            ChatColor color = ConfigManager.hasPerPlayerGlow() ? PlayerDataManager.getGlowColor(player) : ConfigManager.getGlowColor();
-            if (color == null) return;
-            glowingEntities.setGlowing(item, player, color);
-        } catch (ReflectiveOperationException ex) {
-            ex.printStackTrace();
+        if (ConfigManager.getPickupDelay() != 0) {
+            item.setPickupDelay(ConfigManager.getPickupDelay() * 20);
         }
-    }
 
-    public static void shutdown()
-    {
-        if (glowingEntities == null) return;
-        glowingEntities.disable();
+        if (!ConfigManager.hasOptionGlow()) return;
+
+        ChatColor color = ConfigManager.hasPerPlayerGlow() ? PlayerDataManager.getGlowColor(player) : ConfigManager.getGlowColor();
+
+        if (color == null) return;
+
+        player.getScoreboard().getTeam(TEAM_PREFIX_GLOW + color.name()).addEntry(item.getUniqueId().toString());
+        item.setGlowing(true);
     }
 
     public static ItemStack setItemStackOwner(ItemStack is, UUID uniqueId, boolean clone)

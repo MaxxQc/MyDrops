@@ -7,6 +7,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.ItemSpawnEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 
 import java.util.UUID;
 
@@ -21,7 +22,7 @@ public class ProtectionHandler implements Listener
     }
 
     @EventHandler
-    public void onPickup(EntityPickupItemEvent e)
+    private void onPickup(EntityPickupItemEvent e)
     {
         UUID ownerUUID = Utils.parseEntity(e.getItem());
         if (!(e.getEntity() instanceof Player) || ownerUUID == null || e.getEntity().getUniqueId().equals(ownerUUID) || e.getEntity().hasPermission("mydrops.bypass.pickup")) return;
