@@ -16,7 +16,7 @@ public class AutoUpdaterHandler implements Listener
     {
         if (!Constants.updateAvailable() || !e.getPlayer().hasPermission("mydrops.update")) return;
 
-        BaseComponent component = new TextComponent(new ComponentBuilder( "A new update is avaiable for ").color(ChatColor.YELLOW)
+        BaseComponent component = new TextComponent(new ComponentBuilder( "A new update is available for ").color(ChatColor.YELLOW)
                 .append("MyDrops\n").color(ChatColor.GOLD).bold(true)
                 .append("Current version: ").color(ChatColor.YELLOW).bold(false)
                 .append(Constants.CURRENT_VERSION + "\n").color(ChatColor.GOLD)

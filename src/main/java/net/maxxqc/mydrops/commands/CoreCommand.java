@@ -84,6 +84,7 @@ public class CoreCommand implements CommandInterface, TabCompleter
             }
         }
         //TODO protection only return enabled protection on server
+        //TODO add mythic mobs protection
         else if (args.length == 3)
         {
             if (args[0].equalsIgnoreCase("protection") && sender.hasPermission("mydrops.command.protection") && !args[1].equalsIgnoreCase("list"))

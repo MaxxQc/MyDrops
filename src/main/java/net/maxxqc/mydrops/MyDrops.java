@@ -2,7 +2,7 @@ package net.maxxqc.mydrops;
 
 import net.maxxqc.mydrops.commands.*;
 import net.maxxqc.mydrops.events.AutoUpdaterHandler;
-import net.maxxqc.mydrops.events.JoinLeaveHandler;
+import net.maxxqc.mydrops.inventory.GuiManager;
 import net.maxxqc.mydrops.protection.*;
 import net.maxxqc.mydrops.utils.ConfigManager;
 import net.maxxqc.mydrops.utils.Constants;
@@ -48,12 +48,15 @@ public final class MyDrops extends JavaPlugin implements Listener
         updaterRunnable.runTaskTimerAsynchronously(this, 0L, 600L);
     }
 
+    @Override
+    public void onDisable()
+    {
+        Utils.disableGlowingEntities();
+    }
+
     private void registerEventHandlers()
     {
         Bukkit.getServer().getPluginManager().registerEvents(new ProtectionHandler(), this);
-
-        if (ConfigManager.hasOptionGlow())
-            Bukkit.getServer().getPluginManager().registerEvents(new JoinLeaveHandler(), this);
 
         if (ConfigManager.hasItemDropProtection())
             Bukkit.getServer().getPluginManager().registerEvents(new ItemDropHandler(), this);

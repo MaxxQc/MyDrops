@@ -1,6 +1,7 @@
 package net.maxxqc.mydrops.utils;
 
-import com.iridium.iridiumcolorapi.IridiumColorAPI;
+import fr.skytasul.glowingentities.GlowingEntities;
+import net.maxxqc.mydrops.inventory.GuiManager;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SimplePie;
 import org.bukkit.Bukkit;
@@ -15,9 +16,13 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scoreboard.Team;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Utils
 {
@@ -25,9 +30,11 @@ public class Utils
 
     private static final String MYDROPS_TAG = "mydrops-owner";
     private static final String LEASH_TAG = "mydrops-leash";
-    private static final String TEAM_PREFIX_GLOW = "MYDROPS_DO_NOT_TOUCH_";
+    private static final Map<UUID, ItemStack[]> TRASH_CONTENT = new HashMap<>();
 
+    private static GlowingEntities glowingEntities;
     private static NamespacedKey namespaceKey;
+    private static GuiManager guiManager;
 
     public static void init(JavaPlugin plugin)
     {
@@ -35,6 +42,16 @@ public class Utils
         namespaceKey = new NamespacedKey(plugin, MYDROPS_TAG);
         ConfigManager.init(plugin);
         PlayerDataManager.init(plugin);
+
+        guiManager = new GuiManager();
+        Bukkit.getServer().getPluginManager().registerEvents(guiManager, plugin);
+
+        try {
+            if (ConfigManager.hasOptionGlow())
+                glowingEntities = new GlowingEntities(plugin);
+        } catch (Exception e) {
+            plugin.getLogger().warning("GlowingEntities not found. Glow indicator will be disabled.");
+        }
 
         if (ConfigManager.hasBStats())
         {
@@ -57,17 +74,9 @@ public class Utils
         }
     }
 
-    public static void createGlowingTeams(Player player) {
-        for (ChatColor color : ChatColor.values()) {
-            if (!color.isFormat() && color != ChatColor.RESET) {
-                Team team = player.getScoreboard().getTeam(TEAM_PREFIX_GLOW + color.name());
-
-                if (team == null) {
-                    team = player.getScoreboard().registerNewTeam(TEAM_PREFIX_GLOW + color.name());
-                }
-
-                team.setColor(color);
-            }
+    public static void disableGlowingEntities() {
+        if (glowingEntities != null) {
+            glowingEntities.disable();
         }
     }
 
@@ -101,8 +110,12 @@ public class Utils
 
         if (color == null) return;
 
-        player.getScoreboard().getTeam(TEAM_PREFIX_GLOW + color.name()).addEntry(item.getUniqueId().toString());
-        item.setGlowing(true);
+        try {
+            glowingEntities.setGlowing(item, player, color);
+        }
+        catch (ReflectiveOperationException e) {
+            e.printStackTrace();
+        }
     }
 
     public static ItemStack setItemStackOwner(ItemStack is, UUID uniqueId, boolean clone)
@@ -119,10 +132,9 @@ public class Utils
         return setItemStackOwner(is, uniqueId, false);
     }
 
-    public static Block setBlockOwner(Block block, UUID uniqueId)
+    public static void setBlockOwner(Block block, UUID uniqueId)
     {
         block.setMetadata(MYDROPS_TAG, new FixedMetadataValue(plugin, uniqueId));
-        return block;
     }
 
     public static ItemStack getItemStackFromVehicle(Vehicle vehicle)
@@ -167,7 +179,24 @@ public class Utils
 
     public static String colorize(String string)
     {
-        return IridiumColorAPI.process(string);
+        Pattern pattern = Pattern.compile("#[a-fA-F0-9]{6}");
+        Matcher matcher = pattern.matcher(string);
+
+        while (matcher.find()) {
+            String color = string.substring(matcher.start(), matcher.end());
+            string = string.replace(color, net.md_5.bungee.api.ChatColor.of(color) + "");
+            matcher = pattern.matcher(string);
+        }
+
+        return ChatColor.translateAlternateColorCodes('&', string);
+    }
+
+    public static String[] colorize(String... strings)
+    {
+        for (int i = 0; i < strings.length; i++)
+            strings[i] = colorize(strings[i]);
+
+        return strings;
     }
 
     public static ItemStack getDropItemFromBoat(Boat boat)
@@ -192,5 +221,34 @@ public class Utils
             return new ItemStack(Material.FURNACE_MINECART);
         else
             return new ItemStack(Material.MINECART);
+    }
+
+    public static GuiManager getGuiManager() {
+        return guiManager;
+    }
+
+    public static void colorizeItem(ItemStack item) {
+        ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName(colorize(meta.getDisplayName()));
+        meta.setLore(meta.getLore() == null ? null : List.of(colorize(meta.getLore().toArray(new String[meta.getLore().size()]))));
+        item.setItemMeta(meta);
+    }
+
+    public static void saveTrashContent(Player player, ItemStack[] content) {
+        TRASH_CONTENT.put(player.getUniqueId(), content);
+    }
+
+    public static void clearTrashContent(Player player) {
+        TRASH_CONTENT.remove(player.getUniqueId());
+    }
+
+    public static boolean hasTrashContent(Player player) {
+        return TRASH_CONTENT.containsKey(player.getUniqueId());
+    }
+
+    public static ItemStack[] getTrashContent(Player player) {
+        ItemStack[] items = TRASH_CONTENT.get(player.getUniqueId());
+        clearTrashContent(player);
+        return items;
     }
 }

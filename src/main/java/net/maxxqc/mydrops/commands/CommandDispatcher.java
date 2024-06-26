@@ -1,7 +1,7 @@
 package net.maxxqc.mydrops.commands;
 
-import com.iridium.iridiumcolorapi.IridiumColorAPI;
 import net.maxxqc.mydrops.utils.ConfigManager;
+import net.maxxqc.mydrops.utils.Utils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -46,7 +46,7 @@ public class CommandDispatcher implements CommandExecutor
             }
             else
             {
-                sender.sendMessage(IridiumColorAPI.process(ConfigManager.getMsgCmdNoPermission().replaceAll("\\{subcommand}", "mydrops")));
+                sender.sendMessage(Utils.colorize(ConfigManager.getMsgCmdNoPermission().replaceAll("\\{subcommand}", "mydrops")));
             }
 
             return true;
@@ -62,14 +62,14 @@ public class CommandDispatcher implements CommandExecutor
             }
             else
             {
-                sender.sendMessage(IridiumColorAPI.process(ConfigManager.getMsgCmdNoPermission().replaceAll("\\{subcommand}", args[0].toLowerCase())));
+                sender.sendMessage(Utils.colorize(ConfigManager.getMsgCmdNoPermission().replaceAll("\\{subcommand}", args[0].toLowerCase())));
             }
 
             return true;
         }
         else
         {
-            sender.sendMessage(IridiumColorAPI.process(ConfigManager.getMsgCmdUnknownSub().replaceAll("\\{subcommand}", args[0].toLowerCase())));
+            sender.sendMessage(Utils.colorize(ConfigManager.getMsgCmdUnknownSub().replaceAll("\\{subcommand}", args[0].toLowerCase())));
             return true;
         }
     }

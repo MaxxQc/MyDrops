@@ -1,7 +1,10 @@
 package net.maxxqc.mydrops.utils;
 
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Collections;
@@ -13,9 +16,13 @@ public class ConfigManager
     private static DatabaseType databaseType;
     private static String msgCmdPlayerOnly;
     private static String msgCmdTrashTitle;
-    private static String txtConfirmYes;
-    private static String txtConfirmNo;
+    private static String txtConfirmTitle;
     private static ChatColor glowColor;
+
+    private static ItemStack defaultAcceptItem;
+    private static ItemStack acceptItem;
+    private static ItemStack defaultDeclineItem;
+    private static ItemStack declineItem;
 
     public static void init(JavaPlugin plugin) {
         config = plugin.getConfig();
@@ -30,6 +37,7 @@ public class ConfigManager
         config.addDefault("options.enable-bstats", true);
         config.addDefault("options.enable-auto-update-checker", true);
         config.addDefault("options.trash-confirm-close", true);
+        config.addDefault("options.allow-close-confirm-with-escape", false);
 
         config.addDefault("worlds.is-blacklist", true);
         config.addDefault("worlds.list", Collections.singletonList("someworld"));
@@ -58,8 +66,19 @@ public class ConfigManager
         config.addDefault("messages.commands.glow.invalid", "&eGlow color &o&6{color}&e is not valid");
         config.addDefault("messages.commands.trash.container-title", "&cTrash bin");
         config.addDefault("messages.gui.confirmation.title", "&6Confirm?");
-        config.addDefault("messages.gui.confirmation.yes", "&aProceed");
-        config.addDefault("messages.gui.confirmation.no", "&cCancel");
+
+        defaultAcceptItem = new ItemStack(Material.GREEN_STAINED_GLASS_PANE);
+        ItemMeta acceptMeta = defaultAcceptItem.getItemMeta();
+        acceptMeta.setDisplayName("&aAccept");
+        defaultAcceptItem.setItemMeta(acceptMeta);
+
+        defaultDeclineItem = new ItemStack(Material.RED_STAINED_GLASS_PANE);
+        ItemMeta declineMeta = defaultDeclineItem.getItemMeta();
+        declineMeta.setDisplayName("&cDecline");
+        defaultDeclineItem.setItemMeta(declineMeta);
+
+        config.addDefault("items.confirmation.accept", defaultAcceptItem);
+        config.addDefault("items.confirmation.decline", defaultDeclineItem);
 
         config.options().copyDefaults(true);
         plugin.saveConfig();
@@ -71,6 +90,10 @@ public class ConfigManager
             databaseType = DatabaseType.valueOf(config.getString("options.database-format", "file").toUpperCase());
 
         return databaseType;
+    }
+
+    public static boolean canCloseConfirmWithEscape() {
+        return config.getBoolean("options.allow-close-confirm-with-escape", false);
     }
 
     public static boolean hasOptionGlow() {
@@ -146,6 +169,10 @@ public class ConfigManager
         return config.getBoolean("options.enable-bstats", true);
     }
 
+    public static boolean hasTrashConfirmClose() {
+        return config.getBoolean("options.trash-confirm-close", true);
+    }
+
     public static String getMsgCmdPlayerOnly()
     {
         if (msgCmdPlayerOnly == null)
@@ -202,19 +229,29 @@ public class ConfigManager
         return config.getBoolean("options.enable-auto-update-checker", true);
     }
 
-    public static String getTxtConfirmYes()
+    public static String getTxtConfirmTitle()
     {
-        if (txtConfirmYes == null)
-            txtConfirmYes = Utils.colorize(config.getString("messages.gui.confirmation.yes", "&aProceed"));
+        if (txtConfirmTitle == null)
+            txtConfirmTitle = Utils.colorize(config.getString("messages.gui.confirmation.title", "&6Confirm?"));
 
-        return txtConfirmYes;
+        return txtConfirmTitle;
     }
 
-    public static String getTxtConfirmNo()
-    {
-        if (txtConfirmNo == null)
-            txtConfirmNo = Utils.colorize(config.getString("messages.gui.confirmation.no", "&cCancel"));
+    public static ItemStack getAcceptItem() {
+        if (acceptItem == null)
+            acceptItem = config.getItemStack("items.confirmation.accept", defaultAcceptItem);
 
-        return txtConfirmNo;
+        Utils.colorizeItem(acceptItem);
+
+        return acceptItem;
+    }
+
+    public static ItemStack getDeclineItem() {
+        if (declineItem == null)
+            declineItem = config.getItemStack("items.confirmation.decline", defaultDeclineItem);
+
+        Utils.colorizeItem(declineItem);
+
+        return declineItem;
     }
 }

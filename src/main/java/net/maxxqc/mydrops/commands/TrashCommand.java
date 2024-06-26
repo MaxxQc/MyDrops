@@ -1,7 +1,7 @@
 package net.maxxqc.mydrops.commands;
 
-import net.maxxqc.mydrops.utils.ConfigManager;
-import org.bukkit.Bukkit;
+import net.maxxqc.mydrops.inventory.gui.TrashGUI;
+import net.maxxqc.mydrops.utils.Utils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -12,7 +12,7 @@ public class TrashCommand implements CommandInterface
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args)
     {
         Player player = (Player) sender;
-        player.openInventory(Bukkit.createInventory(player, 45, ConfigManager.getMsgCmdTrashTitle()));
+        Utils.getGuiManager().openGUI(new TrashGUI(player), player);
         return true;
     }
 
