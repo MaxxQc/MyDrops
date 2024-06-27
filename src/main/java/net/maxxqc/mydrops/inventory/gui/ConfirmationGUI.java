@@ -11,7 +11,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.scheduler.BukkitRunnable;
 
 public class ConfirmationGUI extends InventoryGUI {
-    private boolean canClose = false;
+    private boolean canClose;
 
     public ConfirmationGUI() {
         super(true);

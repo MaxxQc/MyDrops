@@ -2,9 +2,9 @@ package net.maxxqc.mydrops.utils;
 
 public enum DatabaseType
 {
-    SQLITE,
+    //SQLITE,
     FILE,
-    SQL,
-    MONGODB,
-    MARIADB
+    MYSQL,
+    //MONGODB,
+    //MARIADB
 }

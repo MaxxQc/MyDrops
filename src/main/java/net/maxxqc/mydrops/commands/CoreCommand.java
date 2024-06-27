@@ -3,11 +3,12 @@ package net.maxxqc.mydrops.commands;
 import net.maxxqc.mydrops.utils.ConfigManager;
 import net.maxxqc.mydrops.utils.ProtectionTypes;
 import net.maxxqc.mydrops.utils.Utils;
-import org.bukkit.ChatColor;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+import org.bukkit.generator.WorldInfo;
 import org.bukkit.util.StringUtil;
 
 import java.util.*;
@@ -19,33 +20,34 @@ public class CoreCommand implements CommandInterface, TabCompleter
 
     public CoreCommand()
     {
-        ALL_COLORS = Arrays.stream(ChatColor.values()).map(chatColor -> chatColor.name().toLowerCase()).collect(Collectors.toList());
-        ALL_COLORS.add("none");
-        ALL_COLORS.add("default");
-        ALL_COLORS.remove("reset");
-        ALL_COLORS.remove("bold");
-        ALL_COLORS.remove("italic");
-        ALL_COLORS.remove("strikethrough");
-        ALL_COLORS.remove("underline");
-        ALL_COLORS.remove("magic");
+        ALL_COLORS = new ArrayList<>(ConfigManager.ALL_COLORS);
+        ALL_COLORS.add("NONE");
+        ALL_COLORS.add("DEFAULT");
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args)
     {
+        // TODO add messages to config
         Player player = (Player) sender;
 
         player.sendMessage(Utils.colorize("&eAll commands are:"));
-        player.sendMessage(Utils.colorize("&6/mydrops &e - Shows this help menu"));
+        player.sendMessage(Utils.colorize("&6/" + commandLabel + " &e - Shows this help menu"));
 
         if (ConfigManager.hasPerPlayerGlow() && player.hasPermission("mydrops.command.glowcolor"))
-            player.sendMessage(Utils.colorize("&6/mydrops glowcolor [color]&e - Defines a new glowing color for yourself"));
+            player.sendMessage(Utils.colorize("&6/" + commandLabel + " glowcolor [color]&e - Defines a new glowing color for yourself"));
 
         if (ConfigManager.hasPerPlayerProtection() && player.hasPermission("mydrops.command.protection"))
-            player.sendMessage(Utils.colorize("&6/mydrops protection <protection type> <true/false>&e - Toggles a protection rule for yourself"));
+            player.sendMessage(Utils.colorize("&6/" + commandLabel + " protection <protection type> <true/false>&e - Toggles a protection rule for yourself"));
 
         if (player.hasPermission("mydrops.command.trash"))
-            player.sendMessage(Utils.colorize("&6/mydrops trash &e - Opens up a trash bin container"));
+            player.sendMessage(Utils.colorize("&6/" + commandLabel + " trash &e - Opens up a trash bin container"));
+
+        if (player.hasPermission("mydrops.command.reload"))
+            player.sendMessage(Utils.colorize("&6/" + commandLabel + " reload &e - Reloads the configuration from file"));
+
+        if (player.hasPermission("mydrops.command.config"))
+            player.sendMessage(Utils.colorize("&6/" + commandLabel + " config <key> [value] &e - Defines the value of a setting"));
 
         return true;
     }
@@ -71,25 +73,46 @@ public class CoreCommand implements CommandInterface, TabCompleter
 
             if (sender.hasPermission("mydrops.command.trash"))
                 StringUtil.copyPartialMatches(args[0], Collections.singletonList("trash"), completions);
-        }
-        else if (args.length == 2)
-        {
-            if (args[0].equalsIgnoreCase("glowcolor") && sender.hasPermission("mydrops.command.glowcolor"))
+
+            if (sender.hasPermission("mydrops.command.reload")) {
+                StringUtil.copyPartialMatches(args[0], Collections.singletonList("reload"), completions);
+                StringUtil.copyPartialMatches(args[0], Collections.singletonList("rl"), completions);
+            }
+
+            if (sender.hasPermission("mydrops.command.config"))
+                StringUtil.copyPartialMatches(args[0], Collections.singletonList("config"), completions);
+        } else if (args.length == 2) {
+            if (args[0].equalsIgnoreCase("glowcolor") && sender.hasPermission("mydrops.command.glowcolor")) {
                 StringUtil.copyPartialMatches(args[1], ALL_COLORS, completions);
-            else if (args[0].equalsIgnoreCase("protection") && sender.hasPermission("mydrops.command.protection"))
-            {
+            } else if (args[0].equalsIgnoreCase("protection") && sender.hasPermission("mydrops.command.protection")) {
                 List<String> col = Arrays.stream(ProtectionTypes.values()).map(Enum::toString).collect(Collectors.toList());
                 col.add("list");
                 StringUtil.copyPartialMatches(args[1], col, completions);
+            } else if (args[0].equalsIgnoreCase("config") && sender.hasPermission("mydrops.command.config")) {
+                StringUtil.copyPartialMatches(args[1], ConfigManager.CONFIGS_ARGS.keySet(), completions);
             }
         }
         //TODO protection only return enabled protection on server
         //TODO add mythic mobs protection
         else if (args.length == 3)
         {
-            if (args[0].equalsIgnoreCase("protection") && sender.hasPermission("mydrops.command.protection") && !args[1].equalsIgnoreCase("list"))
+            if (args[0].equalsIgnoreCase("config") && sender.hasPermission("mydrops.command.config"))
+            {
+                if (args[1].equalsIgnoreCase("worlds.list")) {
+                    Set<String> set = Bukkit.getWorlds().stream().map(WorldInfo::getName).collect(Collectors.toSet());
+                    set.addAll(ConfigManager.getWorldList());
+                    StringUtil.copyPartialMatches(args[2], set, completions);
+                } else {
+                    StringUtil.copyPartialMatches(args[2], ConfigManager.CONFIGS_ARGS.getOrDefault(args[1].toLowerCase(), Collections.emptyList()), completions);
+                }
+            }
+            else if (args[0].equalsIgnoreCase("protection") && sender.hasPermission("mydrops.command.protection") && !args[1].equalsIgnoreCase("list"))
             {
                 StringUtil.copyPartialMatches(args[2], Arrays.asList("true", "false"), completions);
+            }
+        } else {
+            if (args[0].equalsIgnoreCase("config") && sender.hasPermission("mydrops.command.config") && args[1].startsWith("messages.")) {
+                StringUtil.copyPartialMatches(args[args.length - 1], ConfigManager.CONFIGS_ARGS.getOrDefault(args[1].toLowerCase(), Collections.emptyList()), completions);
             }
         }
 

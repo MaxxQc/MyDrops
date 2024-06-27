@@ -4,7 +4,6 @@ import fr.skytasul.glowingentities.GlowingEntities;
 import net.maxxqc.mydrops.inventory.GuiManager;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SimplePie;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -43,8 +42,8 @@ public class Utils
         ConfigManager.init(plugin);
         PlayerDataManager.init(plugin);
 
-        guiManager = new GuiManager();
-        Bukkit.getServer().getPluginManager().registerEvents(guiManager, plugin);
+        if (guiManager == null)
+            guiManager = new GuiManager();
 
         try {
             if (ConfigManager.hasOptionGlow())
@@ -224,6 +223,7 @@ public class Utils
     }
 
     public static GuiManager getGuiManager() {
+        if (guiManager == null) guiManager = new GuiManager();
         return guiManager;
     }
 

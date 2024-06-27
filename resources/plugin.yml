@@ -24,6 +24,12 @@ permissions:
   mydrops.command.trash:
     description: Give access to the /mydrops trash command
     default: op
+  mydrops.command.reload:
+    description: Give access to the /mydrops reload command
+    default: op
+  mydrops.command.config:
+    description: Give access to the /mydrops config command
+    default: op
   mydrops.update:
     description: Anyone with this permission will receive informations from the updater when a new version is available
     default: op
