@@ -10,6 +10,7 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.bukkit.generator.WorldInfo;
 import org.bukkit.util.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -17,12 +18,41 @@ import java.util.stream.Collectors;
 public class CoreCommand implements CommandInterface, TabCompleter
 {
     private final List<String> ALL_COLORS;
+    private final Set<String> PROTECTION_ARGS;
 
     public CoreCommand()
     {
         ALL_COLORS = new ArrayList<>(ConfigManager.ALL_COLORS);
         ALL_COLORS.add("NONE");
         ALL_COLORS.add("DEFAULT");
+
+        PROTECTION_ARGS = Arrays.stream(ProtectionTypes.values()).map(Enum::toString).collect(Collectors.toSet());
+
+        if (!ConfigManager.hasItemDropProtection())
+            PROTECTION_ARGS.remove("itemdrop");
+
+        if (!ConfigManager.hasBlockBreakProtection())
+            PROTECTION_ARGS.remove("blockbreak");
+
+        if (!ConfigManager.hasItemFrameDropProtection())
+            PROTECTION_ARGS.remove("itemframedrop");
+
+        if (!ConfigManager.hasVehicleDestroyProtection())
+            PROTECTION_ARGS.remove("vehicledestroy");
+
+        if (!ConfigManager.hasHangingBreakProtection())
+            PROTECTION_ARGS.remove("hangingbreak");
+
+        if (!ConfigManager.hasEntityKillProtection())
+            PROTECTION_ARGS.remove("entitykill");
+
+        if (!ConfigManager.hasPlayerDeathProtection())
+            PROTECTION_ARGS.remove("playerdeath");
+
+        if (!ConfigManager.hasMythicMobsProtection())
+            PROTECTION_ARGS.remove("mythicmobs");
+
+        PROTECTION_ARGS.add("list");
     }
 
     @Override
@@ -59,7 +89,7 @@ public class CoreCommand implements CommandInterface, TabCompleter
     }
 
     @Override
-    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args)
+    public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, String[] args)
     {
         List<String> completions = new ArrayList<>();
 
@@ -85,15 +115,14 @@ public class CoreCommand implements CommandInterface, TabCompleter
             if (args[0].equalsIgnoreCase("glowcolor") && sender.hasPermission("mydrops.command.glowcolor")) {
                 StringUtil.copyPartialMatches(args[1], ALL_COLORS, completions);
             } else if (args[0].equalsIgnoreCase("protection") && sender.hasPermission("mydrops.command.protection")) {
-                List<String> col = Arrays.stream(ProtectionTypes.values()).map(Enum::toString).collect(Collectors.toList());
-                col.add("list");
-                StringUtil.copyPartialMatches(args[1], col, completions);
+
+
+                StringUtil.copyPartialMatches(args[1], PROTECTION_ARGS, completions);
             } else if (args[0].equalsIgnoreCase("config") && sender.hasPermission("mydrops.command.config")) {
                 StringUtil.copyPartialMatches(args[1], ConfigManager.CONFIGS_ARGS.keySet(), completions);
             }
         }
         //TODO protection only return enabled protection on server
-        //TODO add mythic mobs protection
         else if (args.length == 3)
         {
             if (args[0].equalsIgnoreCase("config") && sender.hasPermission("mydrops.command.config"))

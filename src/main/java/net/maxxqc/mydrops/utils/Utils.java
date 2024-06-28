@@ -198,6 +198,12 @@ public class Utils
         return strings;
     }
 
+    public static List<String> colorize(List<String> strings)
+    {
+        strings.replaceAll(Utils::colorize);
+        return strings;
+    }
+
     public static ItemStack getDropItemFromBoat(Boat boat)
     {
         if (boat instanceof ChestBoat)
@@ -250,5 +256,35 @@ public class Utils
         ItemStack[] items = TRASH_CONTENT.get(player.getUniqueId());
         clearTrashContent(player);
         return items;
+    }
+
+    public static int nextDivisibleByNine(int number) {
+        if (number % 9 == 0) {
+            return number;
+        }
+
+        return ((number / 9) + 1) * 9;
+    }
+
+    public static ItemStack createItemStack(Material material, int amount, String name, List<String> lore) {
+        ItemStack item = new ItemStack(material, amount);
+        ItemMeta meta = item.getItemMeta();
+
+        if (name != null)
+            meta.setDisplayName(Utils.colorize(name));
+
+        if (lore != null)
+            meta.setLore(Utils.colorize(lore));
+
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    public static ItemStack createItemStack(Material material, String name) {
+        return createItemStack(material, 1, name, null);
+    }
+
+    public static ItemStack createItemStack(Material material) {
+        return createItemStack(material, 1, null, null);
     }
 }

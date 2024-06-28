@@ -8,5 +8,6 @@ public enum ProtectionTypes
     vehicledestroy,
     hangingbreak,
     entitykill,
-    playerdeath
+    playerdeath,
+    mythicmobs
 }

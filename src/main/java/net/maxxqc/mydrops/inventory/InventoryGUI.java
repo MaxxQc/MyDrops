@@ -1,5 +1,6 @@
 package net.maxxqc.mydrops.inventory;
 
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
@@ -15,8 +16,8 @@ public abstract class InventoryGUI implements InventoryHandler {
     private final Map<Integer, InventoryButton> BUTTONS = new HashMap<>();
     private final boolean HANDLE_CLICKS;
 
-    public InventoryGUI(boolean handleClicks) {
-        this.INVENTORY = createInventory();
+    public InventoryGUI(boolean handleClicks, int size, String... title) {
+        this.INVENTORY = createInventory(size, title.length == 0 ? "" : title[0]);
         this.HANDLE_CLICKS = handleClicks;
     }
 
@@ -64,5 +65,7 @@ public abstract class InventoryGUI implements InventoryHandler {
         this.decorate((Player) e.getPlayer());
     }
 
-    protected abstract Inventory createInventory();
+    private Inventory createInventory(int size, String title) {
+        return Bukkit.createInventory(null, size, title);
+    }
 }

@@ -14,7 +14,7 @@ public class ConfirmationGUI extends InventoryGUI {
     private boolean canClose;
 
     public ConfirmationGUI() {
-        super(true);
+        super(true, 9, ConfigManager.getTxtConfirmTitle());
         this.canClose = ConfigManager.canCloseConfirmWithEscape();
     }
 
@@ -39,11 +39,6 @@ public class ConfirmationGUI extends InventoryGUI {
         this.addButton(6, declineButton);
 
         super.decorate(player);
-    }
-
-    @Override
-    protected Inventory createInventory() {
-        return Bukkit.createInventory(null, 9, ConfigManager.getTxtConfirmTitle());
     }
 
     @Override

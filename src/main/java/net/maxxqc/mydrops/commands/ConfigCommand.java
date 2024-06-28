@@ -1,6 +1,9 @@
 package net.maxxqc.mydrops.commands;
 
+import net.maxxqc.mydrops.inventory.gui.ConfigGUI;
 import net.maxxqc.mydrops.utils.ConfigManager;
+import net.maxxqc.mydrops.utils.Utils;
+import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -15,14 +18,44 @@ public class ConfigCommand implements CommandInterface
     {
         if (args.length < 2)
         {
-            sender.sendMessage(ConfigManager.getMsgCmdConfigUsage().replace("{cmd}", commandLabel));
+            if (!(sender instanceof Player)) {
+                sender.sendMessage(ConfigManager.getMsgCmdPlayerOnly());
+                return true;
+            }
+
+            Utils.getGuiManager().openGUI(new ConfigGUI(), (Player) sender);
             return true;
         }
 
         String key = args[1].toLowerCase();
 
-        if (key.equalsIgnoreCase("items.confirmation.accept") || key.equalsIgnoreCase("items.confirmation.decline") || key.equalsIgnoreCase("items.trash"))
-        {
+        if (key.startsWith("items.")) {
+            if (args.length == 3 && args[2].equalsIgnoreCase("reset")) {
+                ItemStack item;
+
+                switch (key) {
+                    case "items.confirmation.accept":
+                        item = ConfigManager.getDefaultAcceptItem();
+                        break;
+                    case "items.confirmation.decline":
+                        item = ConfigManager.getDefaultDeclineItem();
+                        break;
+                    case "items.gui.back":
+                        item = ConfigManager.getDefaultBackItem();
+                        break;
+                    case "items.gui.close":
+                        item = ConfigManager.getDefaultCloseItem();
+                        break;
+                    default:
+                        item = new ItemStack(Material.COBBLESTONE);
+                        break;
+                }
+
+                ConfigManager.updateValue(key, item);
+                sender.sendMessage(ConfigManager.getMsgCmdConfigSuccess().replace("{key}", key).replace("{value}", item.getType().name()));
+                return true;
+            }
+
             if (!(sender instanceof Player)) {
                 sender.sendMessage(ConfigManager.getMsgCmdPlayerOnly());
                 return true;

@@ -34,12 +34,17 @@ public class ConfigManager
     private static String msgCmdConfigAdded;
     private static String msgCmdConfigRemoved;
     private static String txtConfirmTitle;
+    private static String txtConfigGUITitle;
     private static ChatColor glowColor;
 
     private static ItemStack defaultAcceptItem;
     private static ItemStack acceptItem;
     private static ItemStack defaultDeclineItem;
     private static ItemStack declineItem;
+    private static ItemStack defaultBackItem;
+    private static ItemStack backItem;
+    private static ItemStack defaultCloseItem;
+    private static ItemStack closeItem;
 
     public static Map<String, List<String>> CONFIGS_ARGS = new HashMap<>();
     public static final List<String> ALL_COLORS = Arrays.asList("AQUA", "BLACK", "BLUE", "DARK_AQUA", "DARK_BLUE", "DARK_GRAY", "DARK_GREEN", "DARK_PURPLE", "DARK_RED", "GOLD", "GRAY", "GREEN", "LIGHT_PURPLE", "RED", "WHITE", "YELLOW");
@@ -104,7 +109,7 @@ public class ConfigManager
         CONFIGS_ARGS.put("protection.player-death.enable", Arrays.asList("true", "false"));
         config.addDefault("protection.player-death.player-default", false);
         CONFIGS_ARGS.put("protection.player-death.player-default", Arrays.asList("true", "false"));
-        config.addDefault("protection.mythic-mobs.enable", true);
+        config.addDefault("protection.mythic-mobs.enable", false);
         CONFIGS_ARGS.put("protection.mythic-mobs.enable", Arrays.asList("true", "false"));
         config.addDefault("protection.mythic-mobs.player-default", true);
         CONFIGS_ARGS.put("protection.mythic-mobs.player-default", Arrays.asList("true", "false"));
@@ -141,6 +146,8 @@ public class ConfigManager
         CONFIGS_ARGS.put("messages.commands.invalid-item", Collections.emptyList());
         config.addDefault("messages.gui.confirmation.title", "&6Confirm?");
         CONFIGS_ARGS.put("messages.gui.confirmation.title", Collections.emptyList());
+        config.addDefault("messages.gui.config.title", "&aConfiguration - {key}");
+        CONFIGS_ARGS.put("messages.gui.config.title", Collections.singletonList("{key}"));
 
         defaultAcceptItem = new ItemStack(Material.GREEN_STAINED_GLASS_PANE);
         ItemMeta acceptMeta = defaultAcceptItem.getItemMeta();
@@ -153,9 +160,24 @@ public class ConfigManager
         defaultDeclineItem.setItemMeta(declineMeta);
 
         config.addDefault("items.confirmation.accept", defaultAcceptItem);
-        CONFIGS_ARGS.put("items.confirmation.accept", Collections.emptyList());
+        CONFIGS_ARGS.put("items.confirmation.accept", Collections.singletonList("reset"));
         config.addDefault("items.confirmation.decline", defaultDeclineItem);
-        CONFIGS_ARGS.put("items.confirmation.decline", Collections.emptyList());
+        CONFIGS_ARGS.put("items.confirmation.decline", Collections.singletonList("reset"));
+
+        defaultBackItem = new ItemStack(Material.BARRIER);
+        ItemMeta backMeta = defaultBackItem.getItemMeta();
+        backMeta.setDisplayName("&cBack");
+        defaultBackItem.setItemMeta(backMeta);
+
+        defaultCloseItem = new ItemStack(Material.BARRIER);
+        ItemMeta closeMeta = defaultCloseItem.getItemMeta();
+        closeMeta.setDisplayName("&cClose");
+        defaultCloseItem.setItemMeta(closeMeta);
+
+        config.addDefault("items.gui.back", defaultBackItem);
+        CONFIGS_ARGS.put("items.gui.back",  Collections.singletonList("reset"));
+        config.addDefault("items.gui.close", defaultCloseItem);
+        CONFIGS_ARGS.put("items.gui.close", Collections.singletonList("reset"));
 
         config.options().copyDefaults(true);
         plugin.saveConfig();
@@ -222,11 +244,16 @@ public class ConfigManager
         msgCmdConfigAdded = null;
         msgCmdConfigRemoved = null;
         txtConfirmTitle = null;
+        txtConfigGUITitle = null;
         glowColor = null;
         defaultAcceptItem = null;
         acceptItem = null;
         defaultDeclineItem = null;
         declineItem = null;
+        defaultBackItem = null;
+        backItem = null;
+        defaultCloseItem = null;
+        closeItem = null;
     }
 
     public static DatabaseType getDatabaseType()
@@ -306,7 +333,7 @@ public class ConfigManager
     }
 
     public static boolean hasMythicMobsProtection() {
-        return config.getBoolean("protection.mythic-mobs.enable", true);
+        return config.getBoolean("protection.mythic-mobs.enable", false);
     }
 
     public static boolean hasBStats()
@@ -448,6 +475,13 @@ public class ConfigManager
         return txtConfirmTitle;
     }
 
+    public static String getTxtConfigGUITitle() {
+        if (txtConfigGUITitle == null)
+            txtConfigGUITitle = Utils.colorize(config.getString("messages.gui.config.title", "&aConfiguration - {key}"));
+
+        return txtConfigGUITitle;
+    }
+
     public static ItemStack getAcceptItem() {
         if (acceptItem == null)
             acceptItem = config.getItemStack("items.confirmation.accept", defaultAcceptItem);
@@ -455,6 +489,10 @@ public class ConfigManager
         Utils.colorizeItem(acceptItem);
 
         return acceptItem;
+    }
+
+    public static ItemStack getDefaultAcceptItem() {
+        return defaultAcceptItem;
     }
 
     public static ItemStack getDeclineItem() {
@@ -466,10 +504,44 @@ public class ConfigManager
         return declineItem;
     }
 
+    public static ItemStack getDefaultDeclineItem() {
+        return defaultDeclineItem;
+    }
+
+    public static ItemStack getBackItem() {
+        if (backItem == null)
+            backItem = config.getItemStack("items.gui.back", defaultBackItem);
+
+        Utils.colorizeItem(backItem);
+
+        return backItem;
+    }
+
+    public static ItemStack getDefaultBackItem() {
+        return defaultBackItem;
+    }
+
+    public static ItemStack getCloseItem() {
+        if (closeItem == null)
+            closeItem = config.getItemStack("items.gui.close", defaultCloseItem);
+
+        Utils.colorizeItem(closeItem);
+
+        return closeItem;
+    }
+
+    public static ItemStack getDefaultCloseItem() {
+        return defaultCloseItem;
+    }
+
     public static void updateValue(String key, Object value)
     {
         config.set(key, value);
         plugin.saveConfig();
         reload();
+    }
+
+    public static List<String> getGlobalKeys() {
+        return new ArrayList<>(config.getKeys(false));
     }
 }
