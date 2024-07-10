@@ -151,7 +151,7 @@ public class ConfigManager
         CONFIGS_ARGS.put("messages.commands.config.removed", Arrays.asList("{value}", "{key}"));
         config.addDefault("messages.commands.config.value", "&bValue of &3&o{key}&b is &3&o{value}");
         CONFIGS_ARGS.put("messages.commands.config.value", Arrays.asList("{value}", "{key}"));
-        config.addDefault("messages.commands.config.usage", "&cUsage: /{cmd} config <key> [value]");
+        config.addDefault("messages.commands.config.usage", "&cUsage: /{cmd} config [key] [value]");
         CONFIGS_ARGS.put("messages.commands.config.usage", Collections.singletonList("{cmd}"));
         config.addDefault("messages.commands.config.type", "&bPlease type the new value in chat | &cType cancel to exit");
         CONFIGS_ARGS.put("messages.commands.config.type", Collections.emptyList());
@@ -270,6 +270,14 @@ public class ConfigManager
         msgCmdConfigUsage = null;
         msgCmdConfigAdded = null;
         msgCmdConfigRemoved = null;
+        msgCmdConfigValue = null;
+        msgCmdConfigType = null;
+        msgCmdConfigPlaceholders = null;
+        msgCmdConfigCurrentValue = null;
+        msgCmdConfigInputCancelled = null;
+        msgCmdConfigRightClick = null;
+        msgCmdConfigLeftClick = null;
+        msgCmdConfigShiftClick = null;
         txtConfirmTitle = null;
         txtConfigGUITitle = null;
         glowColor = null;
@@ -419,7 +427,7 @@ public class ConfigManager
 
     public static String getMsgCmdConfigUsage() {
         if (msgCmdConfigUsage == null)
-            msgCmdConfigUsage = Utils.colorize(config.getString("messages.commands.config.usage", "&cUsage: /{cmd} config <key> [value]"));
+            msgCmdConfigUsage = Utils.colorize(config.getString("messages.commands.config.usage", "&cUsage: /{cmd} config [key] [value]"));
 
         return msgCmdConfigUsage;
     }
