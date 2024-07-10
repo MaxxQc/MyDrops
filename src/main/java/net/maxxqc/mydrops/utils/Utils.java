@@ -16,10 +16,7 @@ import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -200,8 +197,9 @@ public class Utils
 
     public static List<String> colorize(List<String> strings)
     {
-        strings.replaceAll(Utils::colorize);
-        return strings;
+        List<String> list = new ArrayList<>(strings);
+        list.replaceAll(Utils::colorize);
+        return list;
     }
 
     public static ItemStack getDropItemFromBoat(Boat boat)
@@ -233,11 +231,12 @@ public class Utils
         return guiManager;
     }
 
-    public static void colorizeItem(ItemStack item) {
+    public static ItemStack colorizeItem(ItemStack item) {
         ItemMeta meta = item.getItemMeta();
         meta.setDisplayName(colorize(meta.getDisplayName()));
         meta.setLore(meta.getLore() == null ? null : List.of(colorize(meta.getLore().toArray(new String[meta.getLore().size()]))));
         item.setItemMeta(meta);
+        return item;
     }
 
     public static void saveTrashContent(Player player, ItemStack[] content) {
@@ -280,11 +279,23 @@ public class Utils
         return item;
     }
 
+    public static ItemStack createItemStack(Material material, String name, List<String> lore) {
+        return createItemStack(material, 1, name, lore);
+    }
+
     public static ItemStack createItemStack(Material material, String name) {
         return createItemStack(material, 1, name, null);
     }
 
     public static ItemStack createItemStack(Material material) {
         return createItemStack(material, 1, null, null);
+    }
+
+    public static ItemStack getColoredWool(ChatColor color) {
+        return createItemStack(Constants.ALL_COLORS.get(color.name()), color + color.name());
+    }
+
+    public static ItemStack getColoredWool(String color) {
+        return createItemStack(Constants.ALL_COLORS.get(color), ChatColor.valueOf(color) + color);
     }
 }

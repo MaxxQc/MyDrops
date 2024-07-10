@@ -5,6 +5,7 @@ import net.maxxqc.mydrops.protection.*;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.HandlerList;
 import org.bukkit.inventory.ItemStack;
@@ -33,8 +34,17 @@ public class ConfigManager
     private static String msgCmdConfigUsage;
     private static String msgCmdConfigAdded;
     private static String msgCmdConfigRemoved;
+    private static String msgCmdConfigValue;
+    private static String msgCmdConfigType;
+    private static String msgCmdConfigPlaceholders;
+    private static String msgCmdConfigCurrentValue;
+    private static String msgCmdConfigInputCancelled;
+    private static String msgCmdConfigRightClick;
+    private static String msgCmdConfigLeftClick;
+    private static String msgCmdConfigShiftClick;
     private static String txtConfirmTitle;
     private static String txtConfigGUITitle;
+    private static String txtColorGUITitle;
     private static ChatColor glowColor;
 
     private static ItemStack defaultAcceptItem;
@@ -47,7 +57,6 @@ public class ConfigManager
     private static ItemStack closeItem;
 
     public static Map<String, List<String>> CONFIGS_ARGS = new HashMap<>();
-    public static final List<String> ALL_COLORS = Arrays.asList("AQUA", "BLACK", "BLUE", "DARK_AQUA", "DARK_BLUE", "DARK_GRAY", "DARK_GREEN", "DARK_PURPLE", "DARK_RED", "GOLD", "GRAY", "GREEN", "LIGHT_PURPLE", "RED", "WHITE", "YELLOW");
 
     public static void init(JavaPlugin plugin) {
         ConfigManager.plugin = plugin;
@@ -60,7 +69,7 @@ public class ConfigManager
         config.addDefault("options.pickup-delay", 0);
         CONFIGS_ARGS.put("options.pickup-delay", Collections.emptyList()); //
         config.addDefault("options.default-glow-color", "AQUA");
-        CONFIGS_ARGS.put("options.default-glow-color", ALL_COLORS);
+        CONFIGS_ARGS.put("options.default-glow-color", Constants.ALL_COLORS.keySet().stream().toList());
         config.addDefault("options.per-player-glow", true);
         CONFIGS_ARGS.put("options.per-player-glow", Arrays.asList("true", "false"));
         config.addDefault("options.per-player-protection", false);
@@ -139,15 +148,33 @@ public class ConfigManager
         config.addDefault("messages.commands.config.added", "&2&o{value}&a has been added to &2&o{key}");
         CONFIGS_ARGS.put("messages.commands.config.added", Arrays.asList("{value}", "{key}"));
         config.addDefault("messages.commands.config.removed", "&4&o{value}&c has been removed from &4&o{key}");
-        CONFIGS_ARGS.put("messages.commands.config.added", Arrays.asList("{value}", "{key}"));
+        CONFIGS_ARGS.put("messages.commands.config.removed", Arrays.asList("{value}", "{key}"));
+        config.addDefault("messages.commands.config.value", "&bValue of &3&o{key}&b is &3&o{value}");
+        CONFIGS_ARGS.put("messages.commands.config.value", Arrays.asList("{value}", "{key}"));
         config.addDefault("messages.commands.config.usage", "&cUsage: /{cmd} config <key> [value]");
         CONFIGS_ARGS.put("messages.commands.config.usage", Collections.singletonList("{cmd}"));
+        config.addDefault("messages.commands.config.type", "&bPlease type the new value in chat | &cType cancel to exit");
+        CONFIGS_ARGS.put("messages.commands.config.type", Collections.emptyList());
+        config.addDefault("messages.commands.config.placeholders", "&bPlaceholders: &3{placeholders}");
+        CONFIGS_ARGS.put("messages.commands.config.placeholders", Collections.singletonList("{placeholders}"));
+        config.addDefault("messages.commands.config.current-value", "&bCurrent value: &3{value}");
+        CONFIGS_ARGS.put("messages.commands.config.current-value", Collections.singletonList("{value}"));
+        config.addDefault("messages.commands.config.input-cancelled", "&cInput has been cancelled");
+        CONFIGS_ARGS.put("messages.commands.config.input-cancelled", Collections.emptyList());
+        config.addDefault("messages.commands.config.right-click", "&7Right click to decrease");
+        CONFIGS_ARGS.put("messages.commands.config.right-click", Collections.emptyList());
+        config.addDefault("messages.commands.config.left-click", "&7Left click to increase");
+        CONFIGS_ARGS.put("messages.commands.config.left-click", Collections.emptyList());
+        config.addDefault("messages.commands.config.shift-click", "&7Shift + click to increase/decrease by 5");
+        CONFIGS_ARGS.put("messages.commands.config.shift-click", Collections.emptyList());
         config.addDefault("messages.commands.invalid-item", "&cYou need to be holding a valid item in order to use this command");
         CONFIGS_ARGS.put("messages.commands.invalid-item", Collections.emptyList());
         config.addDefault("messages.gui.confirmation.title", "&6Confirm?");
         CONFIGS_ARGS.put("messages.gui.confirmation.title", Collections.emptyList());
         config.addDefault("messages.gui.config.title", "&aConfiguration - {key}");
         CONFIGS_ARGS.put("messages.gui.config.title", Collections.singletonList("{key}"));
+        config.addDefault("messages.gui.color.title", "&bSelect a color");
+        CONFIGS_ARGS.put("messages.gui.color.title", Collections.emptyList());
 
         defaultAcceptItem = new ItemStack(Material.GREEN_STAINED_GLASS_PANE);
         ItemMeta acceptMeta = defaultAcceptItem.getItemMeta();
@@ -411,6 +438,62 @@ public class ConfigManager
         return msgCmdConfigRemoved;
     }
 
+    public static String getMsgCmdConfigValue() {
+        if (msgCmdConfigValue == null)
+            msgCmdConfigValue = Utils.colorize(config.getString("messages.commands.config.value", "&bValue of &3&o{key}&b is &3&o{value}"));
+
+        return msgCmdConfigValue;
+    }
+
+    public static String getMsgCmdConfigType() {
+        if (msgCmdConfigType == null)
+            msgCmdConfigType = Utils.colorize(config.getString("messages.commands.config.type", "&bPlease type the new value in chat | &cType cancel to exit"));
+
+        return msgCmdConfigType;
+    }
+
+    public static String getMsgCmdConfigPlaceholders() {
+        if (msgCmdConfigPlaceholders == null)
+            msgCmdConfigPlaceholders = Utils.colorize(config.getString("messages.commands.config.placeholders", "&bPlaceholders: &3{placeholders}"));
+
+        return msgCmdConfigPlaceholders;
+    }
+
+    public static String getMsgCmdConfigCurrentValue() {
+        if (msgCmdConfigCurrentValue == null)
+            msgCmdConfigCurrentValue = Utils.colorize(config.getString("messages.commands.config.current-value", "&bCurrent value: &3{value}"));
+
+        return msgCmdConfigCurrentValue;
+    }
+
+    public static String getMsgCmdConfigInputCancelled() {
+        if (msgCmdConfigInputCancelled == null)
+            msgCmdConfigInputCancelled = Utils.colorize(config.getString("messages.commands.config.input-cancelled", "&cInput has been cancelled"));
+
+        return msgCmdConfigInputCancelled;
+    }
+
+    public static String getMsgCmdConfigRightClick() {
+        if (msgCmdConfigRightClick == null)
+            msgCmdConfigRightClick = Utils.colorize(config.getString("messages.commands.config.right-click", "&7Right click to decrease"));
+
+        return msgCmdConfigRightClick;
+    }
+
+    public static String getMsgCmdConfigLeftClick() {
+        if (msgCmdConfigLeftClick == null)
+            msgCmdConfigLeftClick = Utils.colorize(config.getString("messages.commands.config.left-click", "&7Left click to increase"));
+
+        return msgCmdConfigLeftClick;
+    }
+
+    public static String getMsgCmdConfigShiftClick() {
+        if (msgCmdConfigShiftClick == null)
+            msgCmdConfigShiftClick = Utils.colorize(config.getString("messages.commands.config.shift-click", "&7Shift + click to increase/decrease by 5"));
+
+        return msgCmdConfigShiftClick;
+    }
+
     public static String getMsgCmdTrashTitle()
     {
         if (msgCmdTrashTitle == null)
@@ -482,6 +565,13 @@ public class ConfigManager
         return txtConfigGUITitle;
     }
 
+    public static String getTxtColorGUITitle() {
+        if (txtColorGUITitle == null)
+            txtColorGUITitle = Utils.colorize(config.getString("messages.gui.color.title", "&bSelect a color"));
+
+        return txtColorGUITitle;
+    }
+
     public static ItemStack getAcceptItem() {
         if (acceptItem == null)
             acceptItem = config.getItemStack("items.confirmation.accept", defaultAcceptItem);
@@ -543,5 +633,15 @@ public class ConfigManager
 
     public static List<String> getGlobalKeys() {
         return new ArrayList<>(config.getKeys(false));
+    }
+
+    public static List<String> getKeys(String key) {
+        var keys = new ArrayList<>(config.getConfigurationSection(key).getKeys(true));
+        keys.removeIf(k -> getValue(key + "." + k) instanceof ConfigurationSection);
+        return keys;
+    }
+
+    public static Object getValue(String key) {
+        return config.get(key);
     }
 }

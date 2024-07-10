@@ -76,9 +76,10 @@ public class ConfigCommand implements CommandInterface
             return true;
         }
 
-        if (args.length < 3)
+        if (args.length == 2)
         {
             sender.sendMessage(ConfigManager.getMsgCmdConfigUsage().replace("{cmd}", commandLabel));
+            sender.sendMessage(ConfigManager.getMsgCmdConfigValue().replace("{key}", key).replace("{value}", ConfigManager.getValue(key).toString()));
             return true;
         }
 

@@ -1,6 +1,7 @@
 package net.maxxqc.mydrops.commands;
 
 import net.maxxqc.mydrops.utils.ConfigManager;
+import net.maxxqc.mydrops.utils.Constants;
 import net.maxxqc.mydrops.utils.ProtectionTypes;
 import net.maxxqc.mydrops.utils.Utils;
 import org.bukkit.Bukkit;
@@ -22,7 +23,7 @@ public class CoreCommand implements CommandInterface, TabCompleter
 
     public CoreCommand()
     {
-        ALL_COLORS = new ArrayList<>(ConfigManager.ALL_COLORS);
+        ALL_COLORS = new ArrayList<>(Constants.ALL_COLORS.keySet());
         ALL_COLORS.add("NONE");
         ALL_COLORS.add("DEFAULT");
 
