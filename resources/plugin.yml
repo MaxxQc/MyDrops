@@ -30,6 +30,9 @@ permissions:
   mydrops.command.config:
     description: Give access to the /mydrops config command
     default: op
+  mydrops.command.trust:
+    description: Give access to the /mydrops add and /mydrops remove command
+    default: true
   mydrops.update:
     description: Anyone with this permission will receive informations from the updater when a new version is available
     default: op

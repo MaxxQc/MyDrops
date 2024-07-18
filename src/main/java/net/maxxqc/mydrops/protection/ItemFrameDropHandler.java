@@ -19,15 +19,15 @@ public class ItemFrameDropHandler implements Listener
             return;
 
         ItemFrame ifr = (ItemFrame) e.getEntity();
-        UUID uuid;
+        Player owner;
 
         if (e.getDamager() instanceof Player)
-            uuid = e.getDamager().getUniqueId();
+            owner = (Player) e.getDamager();
         else if (e.getDamager() instanceof Projectile && ((Projectile) e.getDamager()).getShooter() instanceof Player)
-            uuid = ((Player) ((Projectile) e.getDamager()).getShooter()).getUniqueId();
+            owner = (Player) ((Projectile) e.getDamager()).getShooter();
         else
             return;
 
-        ifr.setItem(Utils.setItemStackOwner(ifr.getItem(), uuid, true), false);
+        ifr.setItem(Utils.setItemStackOwner(ifr.getItem(), owner, true), false);
     }
 }

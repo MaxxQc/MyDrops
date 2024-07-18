@@ -11,8 +11,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
 
+import java.util.List;
 import java.util.UUID;
 
 public class ProtectionHandler implements Listener
@@ -20,16 +20,16 @@ public class ProtectionHandler implements Listener
     @EventHandler
     private void onItemSpawn(ItemSpawnEvent e)
     {
-        UUID ownerUUID = Utils.parseItem(e.getEntity());
-        if (ownerUUID == null) return;
-        Utils.handleItemDrop(e.getEntity(), Bukkit.getPlayer(ownerUUID));
+        List<String> canPickupList = Utils.parseItem(e.getEntity());
+        if (canPickupList == null) return;
+        Utils.handleItemDrop(e.getEntity(), Bukkit.getPlayer(UUID.fromString(canPickupList.get(canPickupList.size() - 1))));
     }
 
     @EventHandler
     private void onPickup(EntityPickupItemEvent e)
     {
-        UUID ownerUUID = Utils.parseEntity(e.getItem());
-        if (!(e.getEntity() instanceof Player) || ownerUUID == null || e.getEntity().getUniqueId().equals(ownerUUID) || e.getEntity().hasPermission("mydrops.bypass.pickup")) return;
+        List<String> canPickupList = Utils.parseEntity(e.getItem());
+        if (!(e.getEntity() instanceof Player) || canPickupList == null || canPickupList.contains(e.getEntity().getUniqueId().toString()) || e.getEntity().hasPermission("mydrops.bypass.pickup")) return;
         e.setCancelled(true);
     }
 

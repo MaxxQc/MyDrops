@@ -46,7 +46,7 @@ public class CommandDispatcher implements CommandExecutor
             }
             else
             {
-                sender.sendMessage(Utils.colorize(ConfigManager.getMsgCmdNoPermission().replaceAll("\\{subcommand}", "mydrops")));
+                sender.sendMessage(Utils.colorize(ConfigManager.getMsgCmdNoPermission().replace("{subcommand}", "mydrops")));
             }
 
             return true;
@@ -62,14 +62,14 @@ public class CommandDispatcher implements CommandExecutor
             }
             else
             {
-                sender.sendMessage(Utils.colorize(ConfigManager.getMsgCmdNoPermission().replaceAll("\\{subcommand}", args[0].toLowerCase())));
+                sender.sendMessage(Utils.colorize(ConfigManager.getMsgCmdNoPermission().replace("{subcommand}", args[0].toLowerCase())));
             }
 
             return true;
         }
         else
         {
-            sender.sendMessage(Utils.colorize(ConfigManager.getMsgCmdUnknownSub().replaceAll("\\{subcommand}", args[0].toLowerCase())));
+            sender.sendMessage(Utils.colorize(ConfigManager.getMsgCmdUnknownSub().replace("{subcommand}", args[0].toLowerCase())));
             return true;
         }
     }

@@ -1,5 +1,6 @@
-package net.maxxqc.mydrops.commands;
+package net.maxxqc.mydrops.commands.subcommands;
 
+import net.maxxqc.mydrops.commands.CommandInterface;
 import net.maxxqc.mydrops.utils.ConfigManager;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;

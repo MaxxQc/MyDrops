@@ -1,5 +1,6 @@
-package net.maxxqc.mydrops.commands;
+package net.maxxqc.mydrops.commands.subcommands;
 
+import net.maxxqc.mydrops.commands.CommandInterface;
 import net.maxxqc.mydrops.inventory.gui.TrashGUI;
 import net.maxxqc.mydrops.utils.Utils;
 import org.bukkit.command.Command;

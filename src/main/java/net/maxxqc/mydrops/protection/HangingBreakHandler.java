@@ -12,8 +12,6 @@ import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 public class HangingBreakHandler implements Listener
 {
@@ -23,10 +21,12 @@ public class HangingBreakHandler implements Listener
         if (!(e.getRemover() instanceof Player))
             return;
 
+        Player player = (Player) e.getRemover();
+
         if (e.getEntity() instanceof LeashHitch)
         {
             e.setCancelled(true);
-            handleLeash(e.getEntity(), e.getRemover().getUniqueId());
+            handleLeash(e.getEntity(), player);
             return;
         }
 
@@ -45,7 +45,7 @@ public class HangingBreakHandler implements Listener
 
         e.setCancelled(true);
         e.getEntity().remove();
-        Utils.setItemStackOwner(is, e.getRemover().getUniqueId());
+        Utils.setItemStackOwner(is, player);
         e.getEntity().getWorld().dropItemNaturally(e.getEntity().getLocation(), is);
     }
 
@@ -61,10 +61,10 @@ public class HangingBreakHandler implements Listener
     {
         if (!(e.getRightClicked() instanceof LeashHitch)) return;
         e.setCancelled(true);
-        handleLeash(e.getRightClicked(), e.getPlayer().getUniqueId());
+        handleLeash(e.getRightClicked(), e.getPlayer());
     }
 
-    private void handleLeash(Entity entity, UUID ownerUUID)
+    private void handleLeash(Entity entity, Player player)
     {
         //https://www.spigotmc.org/threads/prevent-break-fence-if-animal-is-attached-to-it-code-works-but-is-it-correct.102571/
         List<LivingEntity> attachedEntities = entity.getNearbyEntities(10, 10, 10).stream() // Creates the stream
@@ -73,11 +73,11 @@ public class HangingBreakHandler implements Listener
                 .filter(LivingEntity::isLeashed) // Filters all of the unleashed entities away.
                 .filter(ent -> ent.getLeashHolder() instanceof LeashHitch) // Filters all non-LeashHitches away
                 .filter(ent -> ent.getLeashHolder().getUniqueId() == entity.getUniqueId())
-                .collect(Collectors.toList());
+                .toList();
         attachedEntities.forEach(Utils::markEntityForLeash);
         ItemStack is = new ItemStack(Material.LEAD, attachedEntities.size());
         entity.remove();
-        Utils.setItemStackOwner(is, ownerUUID);
+        Utils.setItemStackOwner(is, player);
         entity.getWorld().dropItemNaturally(entity.getLocation(), is);
     }
 }

@@ -27,7 +27,7 @@ public class BlockBreakHandler implements Listener
             {
                 if (is == null)
                     continue;
-                Utils.setItemStackOwner(is, e.getPlayer().getUniqueId());
+                Utils.setItemStackOwner(is, e.getPlayer());
             }
         }
         else

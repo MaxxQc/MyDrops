@@ -1,5 +1,6 @@
-package net.maxxqc.mydrops.commands;
+package net.maxxqc.mydrops.commands.subcommands;
 
+import net.maxxqc.mydrops.commands.CommandInterface;
 import net.maxxqc.mydrops.inventory.gui.ConfigGUI;
 import net.maxxqc.mydrops.utils.ConfigManager;
 import net.maxxqc.mydrops.utils.Utils;
@@ -18,11 +19,6 @@ public class ConfigCommand implements CommandInterface
     {
         if (args.length < 2)
         {
-            if (!(sender instanceof Player)) {
-                sender.sendMessage(ConfigManager.getMsgCmdPlayerOnly());
-                return true;
-            }
-
             Utils.getGuiManager().openGUI(new ConfigGUI(), (Player) sender);
             return true;
         }
@@ -53,11 +49,6 @@ public class ConfigCommand implements CommandInterface
 
                 ConfigManager.updateValue(key, item);
                 sender.sendMessage(ConfigManager.getMsgCmdConfigSuccess().replace("{key}", key).replace("{value}", item.getType().name()));
-                return true;
-            }
-
-            if (!(sender instanceof Player)) {
-                sender.sendMessage(ConfigManager.getMsgCmdPlayerOnly());
                 return true;
             }
 

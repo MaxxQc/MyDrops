@@ -22,6 +22,9 @@ public class ConfigGUI extends InventoryGUI {
     public void decorate(Player player) {
         int i = 0;
         for (String key : ConfigManager.getGlobalKeys()) {
+            if (key.equalsIgnoreCase("database"))
+                continue;
+
             ItemStack is = Utils.createItemStack(Material.WHITE_WOOL, "&b" + key);
             InventoryButton button = new InventoryButton().creator(p -> is).clickConsumer(e -> Utils.getGuiManager().openGUI(new ConfigValueGUI(key), player)).dragConsumer(e -> Utils.getGuiManager().openGUI(new ConfigValueGUI(key), player));
             this.addButton(i, button);
@@ -29,7 +32,7 @@ public class ConfigGUI extends InventoryGUI {
             i++;
         }
 
-        InventoryButton backButton = new InventoryButton().creator(p -> ConfigManager.getCloseItem()).clickConsumer(e -> player.closeInventory()).dragConsumer(e -> player.closeInventory());
+        InventoryButton backButton = new InventoryButton().creator(p -> ConfigManager.getCloseItem()).clickConsumer(e -> Utils.delayCloseInv(player)).dragConsumer(e -> player.closeInventory());
         this.addButton(SIZE - 1, backButton);
 
         super.decorate(player);

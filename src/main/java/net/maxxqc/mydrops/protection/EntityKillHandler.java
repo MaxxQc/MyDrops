@@ -13,6 +13,6 @@ public class EntityKillHandler implements Listener
         if (e.getEntity().getKiller() == null)
             return;
 
-        e.getDrops().forEach(is -> Utils.setItemStackOwner(is, e.getEntity().getKiller().getUniqueId()));
+        e.getDrops().forEach(is -> Utils.setItemStackOwner(is, e.getEntity().getKiller()));
     }
 }

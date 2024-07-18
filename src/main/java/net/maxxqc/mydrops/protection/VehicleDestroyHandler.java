@@ -10,19 +10,17 @@ import org.bukkit.event.vehicle.VehicleDestroyEvent;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.UUID;
-
 public class VehicleDestroyHandler implements Listener
 {
     @EventHandler
     private void onVehicleBreak(VehicleDestroyEvent e)
     {
-        UUID uuid;
+        Player owner;
 
         if (e.getAttacker() instanceof Player)
-            uuid = e.getAttacker().getUniqueId();
+            owner = (Player) e.getAttacker();
         else if (e.getAttacker() instanceof Projectile && ((Projectile) e.getAttacker()).getShooter() instanceof Player)
-            uuid = ((Player) ((Projectile) e.getAttacker()).getShooter()).getUniqueId();
+            owner = (Player) ((Projectile) e.getAttacker()).getShooter();
         else
             return;
 
@@ -34,7 +32,7 @@ public class VehicleDestroyHandler implements Listener
             {
                 if (is == null)
                     continue;
-                e.getVehicle().getWorld().dropItemNaturally(e.getVehicle().getLocation(), Utils.setItemStackOwner(is, uuid));
+                e.getVehicle().getWorld().dropItemNaturally(e.getVehicle().getLocation(), Utils.setItemStackOwner(is, owner));
                 ((InventoryHolder) e.getVehicle()).getInventory().remove(is);
             }
         }
@@ -45,6 +43,6 @@ public class VehicleDestroyHandler implements Listener
         // Creative players simply drop the content
         if (((Player) e.getAttacker()).getGameMode() == GameMode.CREATIVE) return;
 
-        e.getVehicle().getWorld().dropItemNaturally(e.getVehicle().getLocation(), Utils.setItemStackOwner(itemStack, uuid));
+        e.getVehicle().getWorld().dropItemNaturally(e.getVehicle().getLocation(), Utils.setItemStackOwner(itemStack, owner));
     }
 }

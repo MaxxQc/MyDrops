@@ -1,8 +1,7 @@
 package net.maxxqc.mydrops;
 
 import net.maxxqc.mydrops.commands.*;
-import net.maxxqc.mydrops.events.AutoUpdaterHandler;
-import net.maxxqc.mydrops.protection.*;
+import net.maxxqc.mydrops.commands.subcommands.*;
 import net.maxxqc.mydrops.utils.ConfigManager;
 import net.maxxqc.mydrops.utils.Constants;
 import net.maxxqc.mydrops.utils.SpigetUpdater;
@@ -11,8 +10,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
-
-import static com.mojang.logging.LogUtils.getLogger;
 
 public final class MyDrops extends JavaPlugin implements Listener
 {
@@ -67,6 +64,7 @@ public final class MyDrops extends JavaPlugin implements Listener
         handler.register("reload", reloadCmd);
         handler.register("rl", reloadCmd);
 
+        handler.register("trust", new TrustCommand());
         handler.register("config", new ConfigCommand());
 
         //if (ConfigManager.hasPerPlayerProtection()) TODO

@@ -4,6 +4,7 @@ import fr.skytasul.glowingentities.GlowingEntities;
 import net.maxxqc.mydrops.inventory.GuiManager;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SimplePie;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -20,8 +21,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Utils
-{
+public class Utils {
     public static JavaPlugin plugin;
 
     private static final String MYDROPS_TAG = "mydrops-owner";
@@ -32,12 +32,10 @@ public class Utils
     private static NamespacedKey namespaceKey;
     private static GuiManager guiManager;
 
-    public static void init(JavaPlugin plugin)
-    {
+    public static void init(JavaPlugin plugin) {
         Utils.plugin = plugin;
         namespaceKey = new NamespacedKey(plugin, MYDROPS_TAG);
         ConfigManager.init(plugin);
-        PlayerDataManager.init(plugin);
 
         if (guiManager == null)
             guiManager = new GuiManager();
@@ -45,12 +43,12 @@ public class Utils
         try {
             if (ConfigManager.hasOptionGlow())
                 glowingEntities = new GlowingEntities(plugin);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             plugin.getLogger().warning("GlowingEntities not found. Glow indicator will be disabled.");
         }
 
-        if (ConfigManager.hasBStats())
-        {
+        if (ConfigManager.hasBStats()) {
             Metrics metrics = new Metrics(plugin, Constants.BSTATS_PLUGIN_ID);
             metrics.addCustomChart(new SimplePie("option_glow", () -> String.valueOf(ConfigManager.hasOptionGlow())));
 
@@ -76,105 +74,110 @@ public class Utils
         }
     }
 
-    public static void handleItemDrop(Item item, Player player)
-    {
-        if (player == null || player.hasPermission("mydrops.bypass.drop")) return;
+    public static void handleItemDrop(Item item, Player player) {
+        if (player == null || player.hasPermission("mydrops.bypass.drop"))
+            return;
 
-        if (ConfigManager.isWorldListBlacklist())
-        {
+        if (ConfigManager.isWorldListBlacklist()) {
             //blacklist
             if (ConfigManager.getWorldList().contains(item.getWorld().getName()))
                 return;
         }
-        else
-        {
+        else {
             //whitelist
             if (!ConfigManager.getWorldList().contains(item.getWorld().getName()))
                 return;
         }
 
-        item.getPersistentDataContainer().set(namespaceKey, PersistentDataType.STRING, player.getUniqueId().toString());
+
+        List<String> trustedPlayers = ConfigManager.getDatabase().getTrustedPlayers(player);
+        trustedPlayers.add(player.getUniqueId().toString());
+        item.getPersistentDataContainer().set(namespaceKey, PersistentDataType.STRING, String.join(";", trustedPlayers));
         item.setInvulnerable(ConfigManager.hasOptionInvulnerable());
 
         if (ConfigManager.getPickupDelay() != 0) {
             item.setPickupDelay(ConfigManager.getPickupDelay() * 20);
         }
 
-        if (!ConfigManager.hasOptionGlow()) return;
+        if (!ConfigManager.hasOptionGlow())
+            return;
 
-        ChatColor color = ConfigManager.hasPerPlayerGlow() ? PlayerDataManager.getGlowColor(player) : ConfigManager.getGlowColor();
+        String color = ConfigManager.hasPerPlayerGlow() ? ConfigManager.getDatabase().getGlowColor(player) : ConfigManager.getGlowColor().name();
 
-        if (color == null) return;
+        if (color == null || color.equalsIgnoreCase("none"))
+            return;
 
         try {
-            glowingEntities.setGlowing(item, player, color);
+            for (String uuid : trustedPlayers) {
+                Player p = Bukkit.getPlayer(UUID.fromString(uuid));
+
+                if (p != null) {
+                    glowingEntities.setGlowing(item, p, ChatColor.valueOf(color));
+                }
+            }
         }
         catch (ReflectiveOperationException e) {
             e.printStackTrace();
         }
     }
 
-    public static ItemStack setItemStackOwner(ItemStack is, UUID uniqueId, boolean clone)
-    {
-        if (clone) is = is.clone();
+    public static ItemStack setItemStackOwner(ItemStack is, Player player, boolean clone) {
+        if (clone)
+            is = is.clone();
         ItemMeta im = is.getItemMeta();
-        im.getPersistentDataContainer().set(namespaceKey, PersistentDataType.STRING, uniqueId.toString());
+        List<String> trustedPlayers = ConfigManager.getDatabase().getTrustedPlayers(player);
+        trustedPlayers.add(player.getUniqueId().toString());
+        im.getPersistentDataContainer().set(namespaceKey, PersistentDataType.STRING, String.join(";", trustedPlayers));
         is.setItemMeta(im);
         return is;
     }
 
-    public static ItemStack setItemStackOwner(ItemStack is, UUID uniqueId)
-    {
-        return setItemStackOwner(is, uniqueId, false);
+    public static ItemStack setItemStackOwner(ItemStack is, Player player) {
+        return setItemStackOwner(is, player, false);
     }
 
-    public static void setBlockOwner(Block block, UUID uniqueId)
-    {
+    public static void setBlockOwner(Block block, UUID uniqueId) {
         block.setMetadata(MYDROPS_TAG, new FixedMetadataValue(plugin, uniqueId));
     }
 
-    public static ItemStack getItemStackFromVehicle(Vehicle vehicle)
-    {
+    public static ItemStack getItemStackFromVehicle(Vehicle vehicle) {
         if (vehicle instanceof Boat) {
             return getDropItemFromBoat((Boat) vehicle);
-        } else if (vehicle instanceof Minecart) {
+        }
+        else if (vehicle instanceof Minecart) {
             return getDropItemFromMinecart((Minecart) vehicle);
         }
 
         return null;
     }
 
-    public static UUID parseItem(Item item)
-    {
+    public static List<String> parseItem(Item item) {
         ItemStack is = item.getItemStack();
         ItemMeta im = is.getItemMeta();
         String str = im.getPersistentDataContainer().get(namespaceKey, PersistentDataType.STRING);
         im.getPersistentDataContainer().remove(namespaceKey);
         is.setItemMeta(im);
-        return str == null ? null : UUID.fromString(str);
+        return str == null ? null : List.of(str.split(";"));
     }
 
-    public static UUID parseEntity(Entity entity)
-    {
-        String value = entity.getPersistentDataContainer().get(namespaceKey, PersistentDataType.STRING);
-        return value == null ? null : UUID.fromString(value);
+    public static List<String> parseEntity(Entity entity) {
+        String canPickupList = entity.getPersistentDataContainer().get(namespaceKey, PersistentDataType.STRING);
+        return canPickupList == null ? null : List.of(canPickupList.split(";"));
     }
 
-    public static void markEntityForLeash(Entity entity)
-    {
+    public static void markEntityForLeash(Entity entity) {
         entity.setMetadata(LEASH_TAG, new FixedMetadataValue(plugin, "true"));
     }
 
-    public static boolean parseLeashEntity(Entity entity)
-    {
-        if (!entity.hasMetadata(LEASH_TAG)) return false;
+    public static boolean parseLeashEntity(Entity entity) {
+        if (!entity.hasMetadata(LEASH_TAG))
+            return false;
         boolean value = entity.getMetadata(LEASH_TAG).get(0).value().equals("true");
         entity.removeMetadata(LEASH_TAG, plugin);
         return value;
     }
 
-    public static String colorize(String string)
-    {
+    public static String colorize(String string) {
         Pattern pattern = Pattern.compile("#[a-fA-F0-9]{6}");
         Matcher matcher = pattern.matcher(string);
 
@@ -187,31 +190,27 @@ public class Utils
         return ChatColor.translateAlternateColorCodes('&', string);
     }
 
-    public static String[] colorize(String... strings)
-    {
+    public static String[] colorize(String... strings) {
         for (int i = 0; i < strings.length; i++)
             strings[i] = colorize(strings[i]);
 
         return strings;
     }
 
-    public static List<String> colorize(List<String> strings)
-    {
+    public static List<String> colorize(List<String> strings) {
         List<String> list = new ArrayList<>(strings);
         list.replaceAll(Utils::colorize);
         return list;
     }
 
-    public static ItemStack getDropItemFromBoat(Boat boat)
-    {
+    public static ItemStack getDropItemFromBoat(Boat boat) {
         if (boat instanceof ChestBoat)
             return new ItemStack(Material.valueOf(boat.getBoatType() + "_CHEST_BOAT"));
         else
             return new ItemStack(Material.valueOf(boat.getBoatType() + "_BOAT"));
     }
 
-    public static ItemStack getDropItemFromMinecart(Minecart minecart)
-    {
+    public static ItemStack getDropItemFromMinecart(Minecart minecart) {
         if (minecart instanceof ExplosiveMinecart)
             return new ItemStack(Material.TNT_MINECART);
         else if (minecart instanceof CommandMinecart)
@@ -227,7 +226,8 @@ public class Utils
     }
 
     public static GuiManager getGuiManager() {
-        if (guiManager == null) guiManager = new GuiManager();
+        if (guiManager == null)
+            guiManager = new GuiManager();
         return guiManager;
     }
 
@@ -295,7 +295,15 @@ public class Utils
         return createItemStack(Constants.ALL_COLORS.get(color.name()), color + color.name());
     }
 
+    public static ItemStack getColoredWool(String color, String suffix) {
+        return createItemStack(Constants.ALL_COLORS.get(color), ChatColor.valueOf(color) + color + suffix);
+    }
+
     public static ItemStack getColoredWool(String color) {
-        return createItemStack(Constants.ALL_COLORS.get(color), ChatColor.valueOf(color) + color);
+        return getColoredWool(color, "");
+    }
+
+    public static void delayCloseInv(Player player) {
+        Bukkit.getScheduler().runTaskLater(plugin, player::closeInventory, 1);
     }
 }

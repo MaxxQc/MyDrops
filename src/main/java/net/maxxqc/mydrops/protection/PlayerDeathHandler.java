@@ -10,6 +10,6 @@ public class PlayerDeathHandler implements Listener
     @EventHandler
     private void onDeath(PlayerDeathEvent e)
     {
-        e.getDrops().forEach(is -> Utils.setItemStackOwner(is, e.getEntity().getUniqueId()));
+        e.getDrops().forEach(is -> Utils.setItemStackOwner(is, e.getEntity()));
     }
 }

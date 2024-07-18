@@ -22,10 +22,10 @@ public class ConfirmationGUI extends InventoryGUI {
     public void decorate(Player player) {
         InventoryButton acceptButton = new InventoryButton().creator(p -> ConfigManager.getAcceptItem()).clickConsumer(e -> {
             canClose = true;
-            player.closeInventory();
+            Utils.delayCloseInv(player);
         }).dragConsumer(e -> {
             canClose = true;
-            player.closeInventory();
+            Utils.delayCloseInv(player);
         });
         InventoryButton declineButton = new InventoryButton().creator(p -> ConfigManager.getDeclineItem()).clickConsumer(e -> {
             canClose = true;
