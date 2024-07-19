@@ -314,6 +314,8 @@ public class ConfigManager {
                 database = new SQLite();
         }
 
+        getLogger().info("Using " + databaseFormat + " database");
+
         database.load();
     }
 
