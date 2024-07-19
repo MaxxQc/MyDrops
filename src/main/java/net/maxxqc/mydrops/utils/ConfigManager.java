@@ -4,6 +4,7 @@ import net.maxxqc.mydrops.databases.IDatabase;
 import net.maxxqc.mydrops.databases.file.FileDatabase;
 import net.maxxqc.mydrops.databases.sqlite.SQLite;
 import net.maxxqc.mydrops.events.AutoUpdaterHandler;
+import net.maxxqc.mydrops.events.HideItemsHandler;
 import net.maxxqc.mydrops.protection.*;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -110,6 +111,8 @@ public class ConfigManager {
         CONFIGS_ARGS.put("options.per-player-glow", Arrays.asList("true", "false"));
         config.addDefault("options.per-player-protection", false);
         CONFIGS_ARGS.put("options.per-player-protection", Arrays.asList("true", "false"));
+        config.addDefault("options.hide-drops-from-others", true);
+        CONFIGS_ARGS.put("options.hide-drops-from-others", Arrays.asList("true", "false"));
         config.addDefault("options.database-format", "sqlite");
         CONFIGS_ARGS.put("options.database-format", new ArrayList<>(Constants.DATABASE_FORMATS));
         config.addDefault("options.enable-bstats", true);
@@ -220,8 +223,8 @@ public class ConfigManager {
         CONFIGS_ARGS.put("messages.commands.invalid-item", Collections.emptyList());
         config.addDefault("messages.commands.trust.usage", "&cUsage: /{cmd} trust <add/remove/list> [player]");
         CONFIGS_ARGS.put("messages.commands.trust.usage", Collections.singletonList("{cmd}"));
-        config.addDefault("messages.commands.trust.usage.add-remove", "&cUsage: /{cmd} trust {subcmd} <player>");
-        CONFIGS_ARGS.put("messages.commands.trust.usage.add-remove", Arrays.asList("{cmd}", "{subcmd}"));
+        config.addDefault("messages.commands.trust.add-remove-usage", "&cUsage: /{cmd} trust {subcmd} <player>");
+        CONFIGS_ARGS.put("messages.commands.trust.add-remove-usage", Arrays.asList("{cmd}", "{subcmd}"));
         config.addDefault("messages.commands.trust.add-success", "&2{player}&a has been added to your trusted players");
         CONFIGS_ARGS.put("messages.commands.trust.add-success", Collections.singletonList("{player}"));
         config.addDefault("messages.commands.trust.remove-success", "&2{player}&a has been removed from your trusted players");
@@ -320,33 +323,36 @@ public class ConfigManager {
 
         Bukkit.getServer().getPluginManager().registerEvents(new ProtectionHandler(), plugin);
 
-        if (ConfigManager.hasItemDropProtection())
+        if (hasItemDropProtection())
             Bukkit.getServer().getPluginManager().registerEvents(new ItemDropHandler(), plugin);
 
-        if (ConfigManager.hasBlockBreakProtection())
+        if (hasBlockBreakProtection())
             Bukkit.getServer().getPluginManager().registerEvents(new BlockBreakHandler(), plugin);
 
-        if (ConfigManager.hasVehicleDestroyProtection())
+        if (hasVehicleDestroyProtection())
             Bukkit.getServer().getPluginManager().registerEvents(new VehicleDestroyHandler(), plugin);
 
-        if (ConfigManager.hasHangingBreakProtection())
+        if (hasHangingBreakProtection())
             Bukkit.getServer().getPluginManager().registerEvents(new HangingBreakHandler(), plugin);
 
-        if (ConfigManager.hasItemFrameDropProtection())
+        if (hasItemFrameDropProtection())
             Bukkit.getServer().getPluginManager().registerEvents(new ItemFrameDropHandler(), plugin);
 
-        if (ConfigManager.hasEntityKillProtection())
+        if (hasEntityKillProtection())
             Bukkit.getServer().getPluginManager().registerEvents(new EntityKillHandler(), plugin);
 
-        if (ConfigManager.hasPlayerDeathProtection())
+        if (hasPlayerDeathProtection())
             Bukkit.getServer().getPluginManager().registerEvents(new PlayerDeathHandler(), plugin);
 
-        if (ConfigManager.hasMythicMobsProtection() && Bukkit.getServer().getPluginManager().isPluginEnabled("MythicMobs")) {
+        if (hasMythicMobsProtection() && Bukkit.getServer().getPluginManager().isPluginEnabled("MythicMobs")) {
             getLogger().info("MythicMobs is enabled, hooking into it for event handling");
             Bukkit.getServer().getPluginManager().registerEvents(new MythicMobsHandler(), plugin);
         }
 
-        if (ConfigManager.hasAutoUpdateChecker())
+        if (getHideDropsFromOthers())
+            Bukkit.getServer().getPluginManager().registerEvents(new HideItemsHandler(), plugin);
+
+        if (hasAutoUpdateChecker())
             Bukkit.getServer().getPluginManager().registerEvents(new AutoUpdaterHandler(), plugin);
     }
 
@@ -689,7 +695,7 @@ public class ConfigManager {
 
     public static String getMsgCmdAddRemoveUsage() {
         if (msgCmdAddRemoveUsage == null)
-            msgCmdAddRemoveUsage = Utils.colorize(config.getString("messages.commands.trust.usage.add-remove", "&cUsage: /{cmd} trust {subcmd} <player>"));
+            msgCmdAddRemoveUsage = Utils.colorize(config.getString("messages.commands.trust.add-remove-usage", "&cUsage: /{cmd} trust {subcmd} <player>"));
 
         return msgCmdAddRemoveUsage;
     }
@@ -895,5 +901,9 @@ public class ConfigManager {
         if (msgHelpReload == null)
             msgHelpReload = Utils.colorize(config.getString("messages.help.reload", "&6/{cmd} reload &e - Reloads the configuration from file"));
         return msgHelpReload;
+    }
+
+    public static boolean getHideDropsFromOthers() {
+        return config.getBoolean("options.hide-drops-from-others", true);
     }
 }

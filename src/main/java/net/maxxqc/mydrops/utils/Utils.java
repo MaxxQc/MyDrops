@@ -89,11 +89,15 @@ public class Utils {
                 return;
         }
 
-
-        List<String> trustedPlayers = ConfigManager.getDatabase().getTrustedPlayers(player);
+        List<String> trustedPlayers = new ArrayList<>(ConfigManager.getDatabase().getTrustedPlayers(player));
         trustedPlayers.add(player.getUniqueId().toString());
         item.getPersistentDataContainer().set(namespaceKey, PersistentDataType.STRING, String.join(";", trustedPlayers));
         item.setInvulnerable(ConfigManager.hasOptionInvulnerable());
+
+        if (ConfigManager.getHideDropsFromOthers())
+            for (Player p : Bukkit.getOnlinePlayers())
+                if (p != null && !p.hasPermission("mydrops.bypass.pickup") && !trustedPlayers.contains(p.getUniqueId().toString()))
+                    p.hideEntity(plugin, item);
 
         if (ConfigManager.getPickupDelay() != 0) {
             item.setPickupDelay(ConfigManager.getPickupDelay() * 20);
@@ -305,5 +309,10 @@ public class Utils {
 
     public static void delayCloseInv(Player player) {
         Bukkit.getScheduler().runTaskLater(plugin, player::closeInventory, 1);
+    }
+
+    public static boolean canPickup(Player player, Item item) {
+        List<String> canPickupList = Utils.parseEntity(item);
+        return canPickupList == null || canPickupList.contains(player.getUniqueId().toString()) || player.hasPermission("mydrops.bypass.pickup");
     }
 }

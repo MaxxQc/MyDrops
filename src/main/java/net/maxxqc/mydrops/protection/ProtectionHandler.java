@@ -15,21 +15,20 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import java.util.List;
 import java.util.UUID;
 
-public class ProtectionHandler implements Listener
-{
+public class ProtectionHandler implements Listener {
     @EventHandler
-    private void onItemSpawn(ItemSpawnEvent e)
-    {
+    private void onItemSpawn(ItemSpawnEvent e) {
         List<String> canPickupList = Utils.parseItem(e.getEntity());
-        if (canPickupList == null) return;
+        if (canPickupList == null)
+            return;
         Utils.handleItemDrop(e.getEntity(), Bukkit.getPlayer(UUID.fromString(canPickupList.get(canPickupList.size() - 1))));
     }
 
     @EventHandler
-    private void onPickup(EntityPickupItemEvent e)
-    {
-        List<String> canPickupList = Utils.parseEntity(e.getItem());
-        if (!(e.getEntity() instanceof Player) || canPickupList == null || canPickupList.contains(e.getEntity().getUniqueId().toString()) || e.getEntity().hasPermission("mydrops.bypass.pickup")) return;
+    private void onPickup(EntityPickupItemEvent e) {
+        if (!(e.getEntity() instanceof Player) || Utils.canPickup((Player) e.getEntity(), e.getItem()))
+            return;
+
         e.setCancelled(true);
     }
 
@@ -42,7 +41,8 @@ public class ProtectionHandler implements Listener
 
             if (!e.getMessage().equalsIgnoreCase("cancel")) {
                 ConfigManager.updateValue(key, e.getMessage());
-            } else {
+            }
+            else {
                 e.getPlayer().sendMessage(ConfigManager.getMsgCmdConfigInputCancelled());
             }
 
