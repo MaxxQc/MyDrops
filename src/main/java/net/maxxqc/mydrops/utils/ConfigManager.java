@@ -2,6 +2,8 @@ package net.maxxqc.mydrops.utils;
 
 import net.maxxqc.mydrops.databases.IDatabase;
 import net.maxxqc.mydrops.databases.file.FileDatabase;
+import net.maxxqc.mydrops.databases.mongodb.MongoDB;
+import net.maxxqc.mydrops.databases.mysql.MySQL;
 import net.maxxqc.mydrops.databases.sqlite.SQLite;
 import net.maxxqc.mydrops.events.AutoUpdaterHandler;
 import net.maxxqc.mydrops.events.HideItemsHandler;
@@ -17,8 +19,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.*;
-
-import static com.mojang.logging.LogUtils.getLogger;
 
 public class ConfigManager {
     private static JavaPlugin plugin;
@@ -86,13 +86,6 @@ public class ConfigManager {
 
     private static IDatabase database;
 
-    private static String databaseHost;
-    private static String databaseUser;
-    private static String databasePassword;
-    private static String databasePort;
-    private static String databaseName;
-    private static String databaseTablesPrefix;
-
     public static Map<String, List<String>> CONFIGS_ARGS = new HashMap<>();
 
     public static void init(JavaPlugin plugin) {
@@ -104,7 +97,9 @@ public class ConfigManager {
         config.addDefault("options.invulnerable", false);
         CONFIGS_ARGS.put("options.invulnerable", Arrays.asList("true", "false"));
         config.addDefault("options.pickup-delay", 0);
-        CONFIGS_ARGS.put("options.pickup-delay", Collections.emptyList()); //
+        CONFIGS_ARGS.put("options.pickup-delay", Collections.emptyList());
+        config.addDefault("options.protection-expiry", 0);
+        CONFIGS_ARGS.put("options.protection-expiry", Collections.emptyList());
         config.addDefault("options.default-glow-color", "AQUA");
         CONFIGS_ARGS.put("options.default-glow-color", Constants.ALL_COLORS.keySet().stream().toList());
         config.addDefault("options.per-player-glow", true);
@@ -136,6 +131,8 @@ public class ConfigManager {
         CONFIGS_ARGS.put("database.database-name", Collections.emptyList());
         config.addDefault("database.tables-prefix", "mydrops_");
         CONFIGS_ARGS.put("database.tables-prefix", Collections.emptyList());
+        config.addDefault("database.uri", "mongodb://localhost:27017");
+        CONFIGS_ARGS.put("database.uri", Collections.emptyList());
 
         config.addDefault("worlds.is-blacklist", true);
         CONFIGS_ARGS.put("worlds.is-blacklist", Arrays.asList("true", "false"));
@@ -307,14 +304,17 @@ public class ConfigManager {
             case "file":
                 database = new FileDatabase();
                 break;
-            case "sqlite":
-                database = new SQLite();
+            case "mysql":
+                database = new MySQL();
+                break;
+            case "mongodb":
+                database = new MongoDB();
                 break;
             default:
                 database = new SQLite();
         }
 
-        getLogger().info("Using " + databaseFormat + " database");
+        plugin.getLogger().info("Using " + database.getClass().getSimpleName() + " database");
 
         database.load();
     }
@@ -347,7 +347,7 @@ public class ConfigManager {
             Bukkit.getServer().getPluginManager().registerEvents(new PlayerDeathHandler(), plugin);
 
         if (hasMythicMobsProtection() && Bukkit.getServer().getPluginManager().isPluginEnabled("MythicMobs")) {
-            getLogger().info("MythicMobs is enabled, hooking into it for event handling");
+            plugin.getLogger().info("MythicMobs is enabled, hooking into it for event handling");
             Bukkit.getServer().getPluginManager().registerEvents(new MythicMobsHandler(), plugin);
         }
 
@@ -407,12 +407,6 @@ public class ConfigManager {
         closeItem = null;
         defaultNoneItem = null;
         noneItem = null;
-        databaseHost = null;
-        databaseUser = null;
-        databasePassword = null;
-        databasePort = null;
-        databaseName = null;
-        databaseTablesPrefix = null;
         msgPlayerNotFound = null;
         database = null;
         msgHelpHeader = null;
@@ -430,17 +424,31 @@ public class ConfigManager {
     }
 
     public static String getDatabaseTablesPrefix() {
-        if (databaseTablesPrefix == null)
-            databaseTablesPrefix = config.getString("database.tables-prefix", "mydrops_");
+        return config.getString("database.tables-prefix", "mydrops_");
+    }
 
-        return databaseTablesPrefix;
+    public static String getDatabaseHost() {
+        return config.getString("database.host", "127.0.0.1");
+    }
+
+    public static String getDatabaseUser() {
+        return config.getString("database.user", "minecraft");
+    }
+
+    public static String getDatabasePassword() {
+        return config.getString("database.password", "pass");
+    }
+
+    public static String getDatabasePort() {
+        return config.getString("database.port", "3306");
     }
 
     public static String getDatabaseName() {
-        if (databaseName == null)
-            databaseName = config.getString("database.database-name", "database");
+        return config.getString("database.database-name", "database");
+    }
 
-        return databaseName;
+    public static String getDatabaseUri() {
+        return config.getString("database.uri", "mongodb://localhost:27017");
     }
 
     public static boolean canCloseConfirmWithEscape() {
@@ -475,6 +483,14 @@ public class ConfigManager {
 
     public static boolean hasPerPlayerGlow() {
         return config.getBoolean("options.glow", true) && config.getBoolean("options.per-player-glow", true);
+    }
+
+    public static int getProtectionExpiry() {
+        return config.getInt("options.protection-expiry", 0);
+    }
+
+    public static boolean hasProtectionExpiry() {
+        return config.getInt("options.protection-expiry", 0) > 0;
     }
 
     public static boolean hasItemDropProtection() {

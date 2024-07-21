@@ -30,6 +30,7 @@ public class ProtectionHandler implements Listener {
             return;
 
         e.setCancelled(true);
+        Utils.removeProtectedItem(e.getItem().getUniqueId());
     }
 
     @EventHandler

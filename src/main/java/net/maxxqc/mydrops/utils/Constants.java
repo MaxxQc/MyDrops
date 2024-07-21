@@ -30,5 +30,5 @@ public class Constants {
 
     public static final Map<String, String> PLAYER_CONFIG_CHAT_MAP = new HashMap<>();
 
-    public static final List<String> DATABASE_FORMATS = List.of("sqlite", "file");
+    public static final List<String> DATABASE_FORMATS = List.of("sqlite", "file", "mysql", "mongodb");
 }

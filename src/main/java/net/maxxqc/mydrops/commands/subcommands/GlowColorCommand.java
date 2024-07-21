@@ -32,21 +32,26 @@ public class GlowColorCommand implements CommandInterface {
             player.sendMessage(Utils.colorize(ConfigManager.getMsgCmdGlowSet().replace("{color}", ConfigManager.getGlowColor() + ConfigManager.getGlowColor().name().toLowerCase())));
         }
         else {
+            ChatColor color = null;
+
             try {
-                ChatColor color = ChatColor.valueOf(args[1].toUpperCase());
-
-                if (color == ConfigManager.getGlowColor()) {
-                    ConfigManager.getDatabase().setGlowColor(player, (ChatColor) null);
-                }
-                else {
-                    ConfigManager.getDatabase().setGlowColor(player, color);
-                }
-
-                player.sendMessage(Utils.colorize(ConfigManager.getMsgCmdGlowSet().replace("{color}", color + color.name().toLowerCase())));
+                color = ChatColor.valueOf(args[1].toUpperCase());
             }
             catch (Exception e) {
                 player.sendMessage(Utils.colorize(ConfigManager.getMsgCmdGlowInvalid().replace("{color}", args[1].toLowerCase())));
             }
+
+            if (color == null)
+                return true;
+
+            if (color == ConfigManager.getGlowColor()) {
+                ConfigManager.getDatabase().setGlowColor(player, (ChatColor) null);
+            }
+            else {
+                ConfigManager.getDatabase().setGlowColor(player, color);
+            }
+
+            player.sendMessage(Utils.colorize(ConfigManager.getMsgCmdGlowSet().replace("{color}", color + color.name().toLowerCase())));
         }
 
         return true;

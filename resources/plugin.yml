@@ -12,6 +12,9 @@ permissions:
   mydrops.bypass.drop:
     description: Allow a player to drop items for anyone to pickup
     default: false
+  mydrops.bypass.expiry:
+    description: Allow a player to keep items that would normally expire
+    default: false
   mydrops.command.core:
     description: Gives access to the /mydrops command
     default: true

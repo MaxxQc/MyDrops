@@ -11,24 +11,21 @@ import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
-public final class MyDrops extends JavaPlugin implements Listener
-{
+public final class MyDrops extends JavaPlugin implements Listener {
     @Override
-    public void onEnable()
-    {
+    public void onEnable() {
         Utils.init(this);
         registerCommands();
 
-        if (!ConfigManager.hasAutoUpdateChecker()) return;
+        if (!ConfigManager.hasAutoUpdateChecker())
+            return;
 
         Constants.setCurrentVersion(getDescription().getVersion());
         SpigetUpdater updater = new SpigetUpdater(getDescription().getVersion());
         BukkitRunnable updaterRunnable = new BukkitRunnable() {
             @Override
-            public void run()
-            {
-                if (updater.checkForUpdate())
-                {
+            public void run() {
+                if (updater.checkForUpdate()) {
                     Constants.markUpdateAvailable(updater.getUpdatedVersion());
 
                     Bukkit.getConsoleSender().sendMessage(Utils.colorize("------------------------------------------------------------------------"));
@@ -46,13 +43,12 @@ public final class MyDrops extends JavaPlugin implements Listener
     }
 
     @Override
-    public void onDisable()
-    {
+    public void onDisable() {
+        ConfigManager.getDatabase().close();
         Utils.disableGlowingEntities();
     }
 
-    private void registerCommands()
-    {
+    private void registerCommands() {
         CommandDispatcher handler = new CommandDispatcher();
         CoreCommand coreCmd = new CoreCommand();
         handler.register("mydrops", coreCmd);

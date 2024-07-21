@@ -16,6 +16,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -24,6 +25,7 @@ import java.util.regex.Pattern;
 public class Utils {
     public static JavaPlugin plugin;
 
+    private static final Map<UUID, Long> PROTECTED_ITEMS = new HashMap<>();
     private static final String MYDROPS_TAG = "mydrops-owner";
     private static final String LEASH_TAG = "mydrops-leash";
     private static final Map<UUID, ItemStack[]> TRASH_CONTENT = new HashMap<>();
@@ -66,6 +68,47 @@ public class Utils {
 
             plugin.getLogger().info("Successfully loaded bStats");
         }
+
+        if (ConfigManager.hasProtectionExpiry()) {
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    Set<UUID> markedForRemoval = new HashSet<>();
+
+                    PROTECTED_ITEMS.forEach((key, value) -> {
+                        if (value < System.currentTimeMillis()) {
+                            markedForRemoval.add(key);
+
+                            new BukkitRunnable() {
+                                @Override
+                                public void run() {
+                                    Item item = (Item) Bukkit.getEntity(key);
+                                    if (item == null)
+                                        return;
+
+                                    item.getPersistentDataContainer().remove(namespaceKey);
+                                    item.setInvulnerable(false);
+
+                                    if (!ConfigManager.getHideDropsFromOthers())
+                                        return;
+
+                                    for (Player p : Bukkit.getOnlinePlayers()) {
+                                        p.showEntity(plugin, item);
+
+                                        try {
+                                            glowingEntities.unsetGlowing(item, p);
+                                        }
+                                        catch (ReflectiveOperationException ignored) {}
+                                    }
+                                }
+                            }.runTask(plugin);
+                        }
+                    });
+
+                    markedForRemoval.forEach(PROTECTED_ITEMS::remove);
+                }
+            }.runTaskTimerAsynchronously(plugin, 20L, 20L);
+        }
     }
 
     public static void disableGlowingEntities() {
@@ -92,6 +135,7 @@ public class Utils {
         List<String> trustedPlayers = new ArrayList<>(ConfigManager.getDatabase().getTrustedPlayers(player));
         trustedPlayers.add(player.getUniqueId().toString());
         item.getPersistentDataContainer().set(namespaceKey, PersistentDataType.STRING, String.join(";", trustedPlayers));
+
         item.setInvulnerable(ConfigManager.hasOptionInvulnerable());
 
         if (ConfigManager.getHideDropsFromOthers())
@@ -101,6 +145,10 @@ public class Utils {
 
         if (ConfigManager.getPickupDelay() != 0) {
             item.setPickupDelay(ConfigManager.getPickupDelay() * 20);
+        }
+
+        if (ConfigManager.hasProtectionExpiry() && !player.hasPermission("mydrops.bypass.expiry")) {
+            PROTECTED_ITEMS.put(item.getUniqueId(), System.currentTimeMillis() + ConfigManager.getProtectionExpiry() * 1000L);
         }
 
         if (!ConfigManager.hasOptionGlow())
@@ -128,11 +176,13 @@ public class Utils {
     public static ItemStack setItemStackOwner(ItemStack is, Player player, boolean clone) {
         if (clone)
             is = is.clone();
+
         ItemMeta im = is.getItemMeta();
         List<String> trustedPlayers = ConfigManager.getDatabase().getTrustedPlayers(player);
         trustedPlayers.add(player.getUniqueId().toString());
         im.getPersistentDataContainer().set(namespaceKey, PersistentDataType.STRING, String.join(";", trustedPlayers));
         is.setItemMeta(im);
+
         return is;
     }
 
@@ -314,5 +364,9 @@ public class Utils {
     public static boolean canPickup(Player player, Item item) {
         List<String> canPickupList = Utils.parseEntity(item);
         return canPickupList == null || canPickupList.contains(player.getUniqueId().toString()) || player.hasPermission("mydrops.bypass.pickup");
+    }
+
+    public static void removeProtectedItem(UUID uniqueId) {
+        PROTECTED_ITEMS.remove(uniqueId);
     }
 }

@@ -12,10 +12,20 @@ public abstract class IDatabase {
     protected final Map<UUID, DropPlayer> CACHE = new HashMap<>();
 
     public abstract String getGlowColor(Player player);
+
     public abstract void setGlowColor(Player player, ChatColor color);
+
     public abstract void setGlowColor(Player player, String color);
+
     public abstract void addTrustedPlayer(Player src, Player target);
+
     public abstract void removeTrustedPlayer(Player src, Player target);
+
     public abstract List<String> getTrustedPlayers(Player player);
+
     public abstract void load();
+
+    public void close() {
+        CACHE.clear();
+    }
 }
