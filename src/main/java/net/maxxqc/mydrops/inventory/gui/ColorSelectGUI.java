@@ -76,7 +76,14 @@ public class ColorSelectGUI extends InventoryGUI {
             else {
                 Utils.getGuiManager().openGUI(new ConfigValueGUI(KEY), player);
             }
-        }).dragConsumer(e -> Utils.getGuiManager().openGUI(new ConfigValueGUI(KEY), player));
+        }).dragConsumer(e -> {
+            if (KEY.isEmpty()) {
+                Utils.delayCloseInv(player);
+            }
+            else {
+                Utils.getGuiManager().openGUI(new ConfigValueGUI(KEY), player);
+            }
+        });
         this.addButton(SIZE - 1, backButton);
 
         super.decorate(player);

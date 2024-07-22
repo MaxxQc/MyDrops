@@ -282,6 +282,7 @@ public class Utils {
     public static GuiManager getGuiManager() {
         if (guiManager == null)
             guiManager = new GuiManager();
+
         return guiManager;
     }
 
@@ -324,10 +325,10 @@ public class Utils {
         ItemMeta meta = item.getItemMeta();
 
         if (name != null)
-            meta.setDisplayName(Utils.colorize(name));
+            meta.setDisplayName(colorize(name));
 
         if (lore != null)
-            meta.setLore(Utils.colorize(lore));
+            meta.setLore(colorize(lore));
 
         item.setItemMeta(meta);
         return item;
