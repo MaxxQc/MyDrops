@@ -1,7 +1,9 @@
 package net.maxxqc.mydrops.commands.subcommands;
 
+import com.alessiodp.parties.api.interfaces.Party;
 import net.maxxqc.mydrops.commands.CommandInterface;
 import net.maxxqc.mydrops.utils.ConfigManager;
+import net.maxxqc.mydrops.utils.Utils;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
@@ -31,6 +33,13 @@ public class TrustCommand implements CommandInterface
             }
 
             addPlayer(source, args[2]);
+        } else if (args[1].equalsIgnoreCase("addparty")) {
+            if (!sender.hasPermission("mydrops.command.trust.party")) {
+                sender.sendMessage(Utils.colorize(ConfigManager.getMsgCmdNoPermission().replace("{subcommand}", args[1].toLowerCase())));
+                return true;
+            }
+
+            addParty(source);
         } else if (args[1].equalsIgnoreCase("remove")) {
             if (args.length < 3) {
                 sender.sendMessage(ConfigManager.getMsgCmdAddRemoveUsage().replace("{cmd}", commandLabel).replace("{subcmd}", args[1]));
@@ -38,6 +47,13 @@ public class TrustCommand implements CommandInterface
             }
 
             removePlayer(source, args[2]);
+        } else if (args[1].equalsIgnoreCase("removeparty")) {
+            if (!sender.hasPermission("mydrops.command.trust.party")) {
+                sender.sendMessage(Utils.colorize(ConfigManager.getMsgCmdNoPermission().replace("{subcommand}", args[1].toLowerCase())));
+                return true;
+            }
+
+            removeParty(source);
         } else {
             listPlayers(source);
         }
@@ -64,6 +80,32 @@ public class TrustCommand implements CommandInterface
 
         ConfigManager.getDatabase().addTrustedPlayer(source, target);
         source.sendMessage(ConfigManager.getMsgCmdAddSuccess().replace("{player}", target.getName()));
+    }
+
+    private void addParty(Player source) {
+        Party party = Utils.getPartyOfPlayer(source);
+        String partyName = party == null ? ConfigManager.getMsgYourParty() : party.getName();
+
+        if (ConfigManager.getDatabase().getTrustedParties(source).contains(source.getUniqueId().toString())) {
+            source.sendMessage(ConfigManager.getMsgCmdTrustAlreadyTrustedParty().replace("{party}", partyName));
+            return;
+        }
+
+        ConfigManager.getDatabase().addTrustedParty(source, source.getUniqueId());
+        source.sendMessage(ConfigManager.getMsgCmdAddSuccessParty().replace("{party}", partyName));
+    }
+
+    private void removeParty(Player source) {
+        Party party = Utils.getPartyOfPlayer(source);
+        String partyName = party == null ? ConfigManager.getMsgYourParty() : party.getName();
+
+        if (!ConfigManager.getDatabase().getTrustedParties(source).contains(source.getUniqueId().toString())) {
+            source.sendMessage(ConfigManager.getMsgCmdTrustNotTrustedParty().replace("{party}", partyName));
+            return;
+        }
+
+        ConfigManager.getDatabase().removeTrustedParty(source, source.getUniqueId());
+        source.sendMessage(ConfigManager.getMsgCmdRemoveSuccessParty().replace("{party}", partyName));
     }
 
     private void removePlayer(Player source, String targetName) {

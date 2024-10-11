@@ -1,5 +1,8 @@
 package net.maxxqc.mydrops.utils;
 
+import com.alessiodp.parties.api.Parties;
+import com.alessiodp.parties.api.interfaces.PartiesAPI;
+import com.alessiodp.parties.api.interfaces.Party;
 import fr.skytasul.glowingentities.GlowingEntities;
 import net.maxxqc.mydrops.inventory.GuiManager;
 import org.bstats.bukkit.Metrics;
@@ -15,6 +18,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -31,12 +35,13 @@ public class Utils {
     private static final Map<UUID, ItemStack[]> TRASH_CONTENT = new HashMap<>();
 
     private static GlowingEntities glowingEntities;
-    private static NamespacedKey namespaceKey;
+    private static NamespacedKey namespacedKey;
     private static GuiManager guiManager;
+    private static PartiesAPI partiesAPI;
 
     public static void init(JavaPlugin plugin) {
         Utils.plugin = plugin;
-        namespaceKey = new NamespacedKey(plugin, MYDROPS_TAG);
+        namespacedKey = new NamespacedKey(plugin, MYDROPS_TAG);
         ConfigManager.init(plugin);
 
         if (guiManager == null)
@@ -49,6 +54,17 @@ public class Utils {
         catch (Exception e) {
             plugin.getLogger().warning("GlowingEntities not found. Glow indicator will be disabled.");
         }
+
+        if (ConfigManager.hasHookParties()) {
+            Plugin partiesPlugin = plugin.getServer().getPluginManager().getPlugin("Parties");
+            if (partiesPlugin != null) {
+                if (partiesPlugin.isEnabled()) {
+                    partiesAPI = Parties.getApi();
+                    plugin.getLogger().info("Parties is enabled, hooking into it");
+                }
+            }
+        }
+
 
         if (ConfigManager.hasBStats()) {
             Metrics metrics = new Metrics(plugin, Constants.BSTATS_PLUGIN_ID);
@@ -86,7 +102,7 @@ public class Utils {
                                     if (item == null)
                                         return;
 
-                                    item.getPersistentDataContainer().remove(namespaceKey);
+                                    item.getPersistentDataContainer().remove(namespacedKey);
                                     item.setInvulnerable(false);
 
                                     if (!ConfigManager.getHideDropsFromOthers())
@@ -121,56 +137,58 @@ public class Utils {
         if (player == null || player.hasPermission("mydrops.bypass.drop"))
             return;
 
-        if (ConfigManager.isWorldListBlacklist()) {
-            //blacklist
-            if (ConfigManager.getWorldList().contains(item.getWorld().getName()))
-                return;
-        }
-        else {
-            //whitelist
-            if (!ConfigManager.getWorldList().contains(item.getWorld().getName()))
-                return;
-        }
+        String worldName = item.getWorld().getName();
+        boolean isBlacklist = ConfigManager.isWorldListBlacklist();
+        List<String> worldList = ConfigManager.getWorldList();
 
-        List<String> trustedPlayers = new ArrayList<>(ConfigManager.getDatabase().getTrustedPlayers(player));
-        trustedPlayers.add(player.getUniqueId().toString());
-        item.getPersistentDataContainer().set(namespaceKey, PersistentDataType.STRING, String.join(";", trustedPlayers));
+        if ((isBlacklist && worldList.contains(worldName)) || (!isBlacklist && !worldList.contains(worldName)))
+            return;
 
+        item.getPersistentDataContainer().set(namespacedKey, PersistentDataType.STRING, player.getUniqueId().toString());
         item.setInvulnerable(ConfigManager.hasOptionInvulnerable());
 
-        if (ConfigManager.getHideDropsFromOthers())
-            for (Player p : Bukkit.getOnlinePlayers())
-                if (p != null && !p.hasPermission("mydrops.bypass.pickup") && !trustedPlayers.contains(p.getUniqueId().toString()))
-                    p.hideEntity(plugin, item);
+        if (ConfigManager.getHideDropsFromOthers() || ConfigManager.hasOptionGlow()) {
+            String color = null;
 
-        if (ConfigManager.getPickupDelay() != 0) {
-            item.setPickupDelay(ConfigManager.getPickupDelay() * 20);
+            if (ConfigManager.hasOptionGlow()) {
+                color = ConfigManager.hasPerPlayerGlow() ? ConfigManager.getDatabase().getGlowColor(player) : ConfigManager.getGlowColor().name();
+            }
+
+            ChatColor glowColor = null;
+            if (color != null && !color.equalsIgnoreCase("none")) {
+                try {
+                    glowColor = ChatColor.valueOf(color);
+                } catch (IllegalArgumentException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                boolean canPickup = Utils.canPickup(p, item);
+
+                if (ConfigManager.getHideDropsFromOthers() && !canPickup) {
+                    p.hideEntity(plugin, item);
+                }
+
+                if (glowColor != null && canPickup) {
+                    try {
+                        glowingEntities.setGlowing(item, p, glowColor);
+                    } catch (ReflectiveOperationException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        int pickupDelay = ConfigManager.getPickupDelay();
+        if (pickupDelay != 0) {
+            item.setPickupDelay(pickupDelay * 20);
         }
 
         if (ConfigManager.hasProtectionExpiry() && !player.hasPermission("mydrops.bypass.expiry")) {
             PROTECTED_ITEMS.put(item.getUniqueId(), System.currentTimeMillis() + ConfigManager.getProtectionExpiry() * 1000L);
         }
 
-        if (!ConfigManager.hasOptionGlow())
-            return;
-
-        String color = ConfigManager.hasPerPlayerGlow() ? ConfigManager.getDatabase().getGlowColor(player) : ConfigManager.getGlowColor().name();
-
-        if (color == null || color.equalsIgnoreCase("none"))
-            return;
-
-        try {
-            for (String uuid : trustedPlayers) {
-                Player p = Bukkit.getPlayer(UUID.fromString(uuid));
-
-                if (p != null) {
-                    glowingEntities.setGlowing(item, p, ChatColor.valueOf(color));
-                }
-            }
-        }
-        catch (ReflectiveOperationException e) {
-            e.printStackTrace();
-        }
     }
 
     public static ItemStack setItemStackOwner(ItemStack is, Player player, boolean clone) {
@@ -180,7 +198,9 @@ public class Utils {
         ItemMeta im = is.getItemMeta();
         List<String> trustedPlayers = ConfigManager.getDatabase().getTrustedPlayers(player);
         trustedPlayers.add(player.getUniqueId().toString());
-        im.getPersistentDataContainer().set(namespaceKey, PersistentDataType.STRING, String.join(";", trustedPlayers));
+        if (im != null) {
+            im.getPersistentDataContainer().set(namespacedKey, PersistentDataType.STRING, String.join(";", trustedPlayers));
+        }
         is.setItemMeta(im);
 
         return is;
@@ -208,15 +228,13 @@ public class Utils {
     public static List<String> parseItem(Item item) {
         ItemStack is = item.getItemStack();
         ItemMeta im = is.getItemMeta();
-        String str = im.getPersistentDataContainer().get(namespaceKey, PersistentDataType.STRING);
-        im.getPersistentDataContainer().remove(namespaceKey);
+        String str = null;
+        if (im != null) {
+            str = im.getPersistentDataContainer().get(namespacedKey, PersistentDataType.STRING);
+            im.getPersistentDataContainer().remove(namespacedKey);
+        }
         is.setItemMeta(im);
         return str == null ? null : List.of(str.split(";"));
-    }
-
-    public static List<String> parseEntity(Entity entity) {
-        String canPickupList = entity.getPersistentDataContainer().get(namespaceKey, PersistentDataType.STRING);
-        return canPickupList == null ? null : List.of(canPickupList.split(";"));
     }
 
     public static void markEntityForLeash(Entity entity) {
@@ -226,7 +244,7 @@ public class Utils {
     public static boolean parseLeashEntity(Entity entity) {
         if (!entity.hasMetadata(LEASH_TAG))
             return false;
-        boolean value = entity.getMetadata(LEASH_TAG).get(0).value().equals("true");
+        boolean value = Objects.equals(entity.getMetadata(LEASH_TAG).get(0).value(), "true");
         entity.removeMetadata(LEASH_TAG, plugin);
         return value;
     }
@@ -288,8 +306,10 @@ public class Utils {
 
     public static ItemStack colorizeItem(ItemStack item) {
         ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName(colorize(meta.getDisplayName()));
-        meta.setLore(meta.getLore() == null ? null : List.of(colorize(meta.getLore().toArray(new String[meta.getLore().size()]))));
+        if (meta != null) {
+            meta.setDisplayName(colorize(meta.getDisplayName()));
+            meta.setLore(meta.getLore() == null ? null : List.of(colorize(meta.getLore().toArray(new String[0]))));
+        }
         item.setItemMeta(meta);
         return item;
     }
@@ -325,10 +345,14 @@ public class Utils {
         ItemMeta meta = item.getItemMeta();
 
         if (name != null)
-            meta.setDisplayName(colorize(name));
+            if (meta != null) {
+                meta.setDisplayName(colorize(name));
+            }
 
         if (lore != null)
-            meta.setLore(colorize(lore));
+            if (meta != null) {
+                meta.setLore(colorize(lore));
+            }
 
         item.setItemMeta(meta);
         return item;
@@ -363,11 +387,50 @@ public class Utils {
     }
 
     public static boolean canPickup(Player player, Item item) {
-        List<String> canPickupList = Utils.parseEntity(item);
-        return canPickupList == null || canPickupList.contains(player.getUniqueId().toString()) || player.hasPermission("mydrops.bypass.pickup");
+        if (player.hasPermission("mydrops.bypass.pickup")) return true;
+
+        String owner = item.getPersistentDataContainer().get(namespacedKey, PersistentDataType.STRING);
+
+        if (owner == null) return true;
+
+        UUID ownerUuid = UUID.fromString(owner);
+        Set<String> canPickupList = new HashSet<>(ConfigManager.getDatabase().getTrustedPlayers(ownerUuid));
+
+        Party ownerParty = partiesAPI.getPartyOfPlayer(ownerUuid);
+
+        for (String partyUuid : ConfigManager.getDatabase().getTrustedParties(ownerUuid))
+        {
+            System.out.println("has a trusted party: " + partyUuid);
+
+            Party party = partiesAPI.getParty(partyUuid);
+
+            if (party == null && partyUuid.equals(owner))
+            {
+                party = ownerParty;
+
+                if (party == null) continue;
+            }
+
+            if (party == null) continue;
+
+            canPickupList.addAll(party.getMembers().stream().map(UUID::toString).toList());
+        }
+
+        canPickupList.add(owner);
+
+        return canPickupList.contains(player.getUniqueId().toString());
     }
 
     public static void removeProtectedItem(UUID uniqueId) {
         PROTECTED_ITEMS.remove(uniqueId);
+    }
+
+    public static boolean isPartiesHooked() {
+        return partiesAPI != null;
+    }
+
+    public static Party getPartyOfPlayer(Player source) {
+        if (!isPartiesHooked()) return null;
+        return partiesAPI.getParty(source.getUniqueId());
     }
 }

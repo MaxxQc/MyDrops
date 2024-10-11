@@ -1,26 +1,23 @@
-package net.maxxqc.mydrops.databases.mongodb;
+package net.maxxqc.mydrops.databases.types;
 
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.ReplaceOptions;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import net.maxxqc.mydrops.databases.DropPlayer;
 import net.maxxqc.mydrops.databases.IDatabase;
 import net.maxxqc.mydrops.utils.ConfigManager;
 import net.maxxqc.mydrops.utils.Utils;
 import org.bson.Document;
 import org.bukkit.ChatColor;
-import org.bukkit.entity.Player;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.logging.Level;
 
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.*;
 
 public class MongoDB extends IDatabase {
     private MongoClient mongoClient;
@@ -65,11 +62,12 @@ public class MongoDB extends IDatabase {
         }
     }
 
-    private DropPlayer loadDataFor(Player player) {
+    private DropPlayer loadDataFor(UUID player) {
         String glowColor = null;
         List<String> trustedPlayers = new ArrayList<>();
+        List<String> trustedParties = new ArrayList<>();
 
-        String uuid = player.getUniqueId().toString();
+        String uuid = player.toString();
         MongoCollection<Document> dataCollection = getDatabase().getCollection(ConfigManager.getDatabaseTablesPrefix() + "data");
         Document dataDoc = dataCollection.find(eq("uuid", uuid)).first();
 
@@ -79,29 +77,33 @@ public class MongoDB extends IDatabase {
 
         MongoCollection<Document> trustCollection = getDatabase().getCollection(ConfigManager.getDatabaseTablesPrefix() + "trust");
         for (Document doc : trustCollection.find(eq("uuid", uuid))) {
-            trustedPlayers.add(doc.getString("trusted-uuid"));
+            if (doc.containsKey("trusted-uuid")) {
+                trustedPlayers.add(doc.getString("trusted-uuid"));
+            }
+
+            if (doc.containsKey("trusted-party")) {
+                trustedParties.add(doc.getString("trusted-party"));
+            }
         }
 
-        DropPlayer dropPlayer = new DropPlayer(player.getUniqueId(), glowColor, trustedPlayers);
-        CACHE.put(player.getUniqueId(), dropPlayer);
+        DropPlayer dropPlayer = new DropPlayer(player, glowColor, trustedPlayers, trustedParties);
+        CACHE.put(player, dropPlayer);
 
         return dropPlayer;
     }
 
-    public String getGlowColor(Player player) {
-        if (CACHE.containsKey(player.getUniqueId())) {
-            return CACHE.get(player.getUniqueId()).getGlowColor();
+    @Override
+    public String getGlowColor(UUID player) {
+        if (CACHE.containsKey(player)) {
+            return CACHE.get(player).getGlowColor();
         }
 
         DropPlayer dropPlayer = loadDataFor(player);
         return dropPlayer.getGlowColor();
     }
 
-    public void setGlowColor(Player player, ChatColor color) {
-        setGlowColor(player, color == null ? null : color.name());
-    }
-
-    public void setGlowColor(Player player, String color) {
+    @Override
+    public void setGlowColor(UUID player, String color) {
         if (color == null || color.equalsIgnoreCase(ConfigManager.getGlowColor().name())) {
             removePlayerData(player);
         }
@@ -110,65 +112,102 @@ public class MongoDB extends IDatabase {
         }
     }
 
-    private void removePlayerData(Player player) {
-        String uuid = player.getUniqueId().toString();
+    private void removePlayerData(UUID player) {
         MongoCollection<Document> dataCollection = getDatabase().getCollection(ConfigManager.getDatabaseTablesPrefix() + "data");
-        dataCollection.deleteOne(eq("uuid", uuid));
+        dataCollection.deleteOne(eq("uuid", player.toString()));
 
-        if (CACHE.containsKey(player.getUniqueId())) {
-            CACHE.get(player.getUniqueId()).setGlowColor(null);
+        if (CACHE.containsKey(player)) {
+            CACHE.get(player).setGlowColor(null);
         }
     }
 
-    private void insertOrReplacePlayerData(Player player, String color) {
-        String uuid = player.getUniqueId().toString();
+    private void insertOrReplacePlayerData(UUID player, String color) {
+        String uuid = player.toString();
         MongoCollection<Document> dataCollection = getDatabase().getCollection(ConfigManager.getDatabaseTablesPrefix() + "data");
 
         Document dataDoc = new Document("uuid", uuid).append("glow-color", color);
         dataCollection.replaceOne(eq("uuid", uuid), dataDoc, new ReplaceOptions().upsert(true));
 
-        if (CACHE.containsKey(player.getUniqueId())) {
-            CACHE.get(player.getUniqueId()).setGlowColor(color);
+        if (CACHE.containsKey(player)) {
+            CACHE.get(player).setGlowColor(color);
         }
         else {
             loadDataFor(player);
         }
     }
 
-    public void addTrustedPlayer(Player src, Player target) {
-        String srcUuid = src.getUniqueId().toString();
-        String targetUuid = target.getUniqueId().toString();
+    @Override
+    public void addTrustedPlayer(UUID src, String target) {
+        String srcUuid = src.toString();
         MongoCollection<Document> trustCollection = getDatabase().getCollection(ConfigManager.getDatabaseTablesPrefix() + "trust");
 
-        Document trustDoc = new Document("uuid", srcUuid).append("trusted-uuid", targetUuid);
+        Document trustDoc = new Document("uuid", srcUuid).append("trusted-uuid", target);
         trustCollection.replaceOne(eq("uuid", srcUuid), trustDoc, new ReplaceOptions().upsert(true));
 
-        if (CACHE.containsKey(src.getUniqueId())) {
-            CACHE.get(src.getUniqueId()).addTrustedPlayer(targetUuid);
+        if (CACHE.containsKey(src)) {
+            CACHE.get(src).addTrustedPlayer(target);
         }
         else {
             loadDataFor(src);
         }
     }
 
-    public void removeTrustedPlayer(Player src, Player target) {
-        String srcUuid = src.getUniqueId().toString();
-        String targetUuid = target.getUniqueId().toString();
+    @Override
+    public void removeTrustedPlayer(UUID src, String target) {
+        String srcUuid = src.toString();
         MongoCollection<Document> trustCollection = getDatabase().getCollection(ConfigManager.getDatabaseTablesPrefix() + "trust");
 
-        trustCollection.deleteOne(and(eq("uuid", srcUuid), eq("trusted-uuid", targetUuid)));
+        trustCollection.deleteOne(and(eq("uuid", srcUuid), eq("trusted-uuid", target)));
 
-        if (CACHE.containsKey(src.getUniqueId())) {
-            CACHE.get(src.getUniqueId()).removeTrustedPlayer(targetUuid);
+        if (CACHE.containsKey(src)) {
+            CACHE.get(src).removeTrustedPlayer(target);
         }
     }
 
-    public List<String> getTrustedPlayers(Player player) {
-        if (CACHE.containsKey(player.getUniqueId())) {
-            return CACHE.get(player.getUniqueId()).getTrustedPlayers();
+    @Override
+    public void addTrustedParty(UUID src, String partyId) {
+        String srcUuid = src.toString();
+        MongoCollection<Document> trustCollection = getDatabase().getCollection(ConfigManager.getDatabaseTablesPrefix() + "trust");
+
+        Document trustDoc = new Document("uuid", srcUuid).append("trusted-party", partyId);
+        trustCollection.replaceOne(eq("uuid", srcUuid), trustDoc, new ReplaceOptions().upsert(true));
+
+        if (CACHE.containsKey(src)) {
+            CACHE.get(src).addTrustedParty(partyId);
+        }
+        else {
+            loadDataFor(src);
+        }
+    }
+
+    @Override
+    public void removeTrustedParty(UUID src, String partyId) {
+        MongoCollection<Document> trustCollection = getDatabase().getCollection(ConfigManager.getDatabaseTablesPrefix() + "trust");
+
+        trustCollection.deleteOne(and(eq("uuid", src.toString()), eq("trusted-party", partyId)));
+
+        if (CACHE.containsKey(src)) {
+            CACHE.get(src).removeTrustedParty(partyId);
+        }
+    }
+
+    @Override
+    public List<String> getTrustedPlayers(UUID player) {
+        if (CACHE.containsKey(player)) {
+            return CACHE.get(player).getTrustedPlayers();
         }
 
         DropPlayer dropPlayer = loadDataFor(player);
         return dropPlayer.getTrustedPlayers();
+    }
+
+    @Override
+    public List<String> getTrustedParties(UUID player) {
+        if (CACHE.containsKey(player)) {
+            return CACHE.get(player).getTrustedParties();
+        }
+
+        DropPlayer dropPlayer = loadDataFor(player);
+        return dropPlayer.getTrustedParties();
     }
 }

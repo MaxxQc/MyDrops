@@ -1,16 +1,16 @@
-package net.maxxqc.mydrops.databases.mysql;
+package net.maxxqc.mydrops.databases.types;
 
 import net.maxxqc.mydrops.databases.DropPlayer;
 import net.maxxqc.mydrops.databases.IDatabase;
 import net.maxxqc.mydrops.utils.ConfigManager;
 import net.maxxqc.mydrops.utils.Utils;
 import org.bukkit.ChatColor;
-import org.bukkit.entity.Player;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.logging.Level;
 
 import static net.maxxqc.mydrops.utils.ConfigManager.*;
@@ -46,6 +46,8 @@ public class MySQL extends IDatabase {
                 createTable(conn, ConfigManager.getDatabaseTablesPrefix() + "data", "`uuid` varchar(36) NOT NULL, `glow-color` varchar(20) NULL, PRIMARY KEY (`uuid`)");
 
                 createTable(conn, ConfigManager.getDatabaseTablesPrefix() + "trust", "`uuid` varchar(36) NOT NULL, `trusted-uuid` varchar(36) NOT NULL, PRIMARY KEY (`uuid`)");
+
+                createTable(conn, ConfigManager.getDatabaseTablesPrefix() + "trust_parties", "`uuid` varchar(36) NOT NULL, `trusted-uuid` varchar(36) NOT NULL, PRIMARY KEY (`uuid`)");
             }
         }
         catch (SQLException e) {
@@ -72,13 +74,14 @@ public class MySQL extends IDatabase {
         }
     }
 
-    private DropPlayer loadDataFor(Player player) {
+    private DropPlayer loadDataFor(UUID player) {
         String glowColor = null;
         List<String> trustedPlayers = new ArrayList<>();
+        List<String> trustedParties = new ArrayList<>();
 
         String glowQuery = "SELECT * FROM " + ConfigManager.getDatabaseTablesPrefix() + "data WHERE `uuid` = ?;";
         try (Connection conn = getSQLConnection(); PreparedStatement ps = conn.prepareStatement(glowQuery)) {
-            ps.setString(1, player.getUniqueId().toString());
+            ps.setString(1, player.toString());
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     glowColor = rs.getString("glow-color");
@@ -92,7 +95,7 @@ public class MySQL extends IDatabase {
 
         String trustedPlayersQuery = "SELECT * FROM " + ConfigManager.getDatabaseTablesPrefix() + "trust WHERE `uuid` = ?;";
         try (Connection conn = getSQLConnection(); PreparedStatement ps = conn.prepareStatement(trustedPlayersQuery)) {
-            ps.setString(1, player.getUniqueId().toString());
+            ps.setString(1, player.toString());
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     trustedPlayers.add(rs.getString("trusted-uuid"));
@@ -104,26 +107,36 @@ public class MySQL extends IDatabase {
             return null;
         }
 
-        DropPlayer dropPlayer = new DropPlayer(player.getUniqueId(), glowColor, trustedPlayers);
-        CACHE.put(player.getUniqueId(), dropPlayer);
+        String trustedPartiesQuery = "SELECT * FROM " + ConfigManager.getDatabaseTablesPrefix() + "trust_parties WHERE `uuid` = ?;";
+        try (Connection conn = getSQLConnection(); PreparedStatement ps = conn.prepareStatement(trustedPartiesQuery)) {
+            ps.setString(1, player.toString());
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    trustedParties.add(rs.getString("trusted-uuid"));
+                }
+            }
+        }
+        catch (SQLException ex) {
+            Utils.plugin.getLogger().log(Level.SEVERE, "Couldn't execute MySQL statement: ", ex);
+            return null;
+        }
+
+        DropPlayer dropPlayer = new DropPlayer(player, glowColor, trustedPlayers, trustedParties);
+        CACHE.put(player, dropPlayer);
 
         return dropPlayer;
     }
 
-    public String getGlowColor(Player player) {
-        if (CACHE.containsKey(player.getUniqueId())) {
-            return CACHE.get(player.getUniqueId()).getGlowColor();
+    public String getGlowColor(UUID player) {
+        if (CACHE.containsKey(player)) {
+            return CACHE.get(player).getGlowColor();
         }
 
         DropPlayer dropPlayer = loadDataFor(player);
         return dropPlayer == null ? ConfigManager.getGlowColor().name() : dropPlayer.getGlowColor();
     }
 
-    public void setGlowColor(Player player, ChatColor color) {
-        setGlowColor(player, color == null ? null : color.name());
-    }
-
-    public void setGlowColor(Player player, String color) {
+    public void setGlowColor(UUID player, String color) {
         if (color == null || color.equalsIgnoreCase(ConfigManager.getGlowColor().name())) {
             removePlayerData(player);
         }
@@ -132,27 +145,27 @@ public class MySQL extends IDatabase {
         }
     }
 
-    private void removePlayerData(Player player) {
+    private void removePlayerData(UUID player) {
         String query = "DELETE FROM " + ConfigManager.getDatabaseTablesPrefix() + "data WHERE `uuid` = ?;";
 
         try (Connection conn = getSQLConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setString(1, player.getUniqueId().toString());
+            ps.setString(1, player.toString());
             ps.executeUpdate();
         }
         catch (SQLException ex) {
             Utils.plugin.getLogger().log(Level.SEVERE, "Couldn't execute MySQL statement: ", ex);
         }
 
-        if (CACHE.containsKey(player.getUniqueId())) {
-            CACHE.get(player.getUniqueId()).setGlowColor(null);
+        if (CACHE.containsKey(player)) {
+            CACHE.get(player).setGlowColor(null);
         }
     }
 
-    private void insertOrReplacePlayerData(Player player, String color) {
+    private void insertOrReplacePlayerData(UUID player, String color) {
         String query = "REPLACE INTO " + ConfigManager.getDatabaseTablesPrefix() + "data (`uuid`, `glow-color`) VALUES(?, ?);";
 
         try (Connection conn = getSQLConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setString(1, player.getUniqueId().toString());
+            ps.setString(1, player.toString());
             ps.setString(2, color);
             ps.executeUpdate();
         }
@@ -160,57 +173,103 @@ public class MySQL extends IDatabase {
             Utils.plugin.getLogger().log(Level.SEVERE, "Couldn't execute MySQL statement: ", ex);
         }
 
-        if (CACHE.containsKey(player.getUniqueId())) {
-            CACHE.get(player.getUniqueId()).setGlowColor(color);
+        if (CACHE.containsKey(player)) {
+            CACHE.get(player).setGlowColor(color);
         }
         else {
             loadDataFor(player);
         }
     }
 
-    public void addTrustedPlayer(Player src, Player target) {
+    public void addTrustedPlayer(UUID src, String target) {
         String query = "REPLACE INTO " + ConfigManager.getDatabaseTablesPrefix() + "trust (`uuid`, `trusted-uuid`) VALUES(?, ?);";
 
         try (Connection conn = getSQLConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setString(1, src.getUniqueId().toString());
-            ps.setString(2, target.getUniqueId().toString());
+            ps.setString(1, src.toString());
+            ps.setString(2, target);
             ps.executeUpdate();
         }
         catch (SQLException ex) {
             Utils.plugin.getLogger().log(Level.SEVERE, "Couldn't execute MySQL statement: ", ex);
         }
 
-        if (CACHE.containsKey(src.getUniqueId())) {
-            CACHE.get(src.getUniqueId()).addTrustedPlayer(target.getUniqueId().toString());
+        if (CACHE.containsKey(src)) {
+            CACHE.get(src).addTrustedPlayer(target);
         }
         else {
             loadDataFor(src);
         }
     }
 
-    public void removeTrustedPlayer(Player src, Player target) {
+    public void removeTrustedPlayer(UUID src, String target) {
         String query = "DELETE FROM " + ConfigManager.getDatabaseTablesPrefix() + "trust WHERE `uuid` = ? AND `trusted-uuid` = ?;";
 
         try (Connection conn = getSQLConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setString(1, src.getUniqueId().toString());
-            ps.setString(2, target.getUniqueId().toString());
+            ps.setString(1, src.toString());
+            ps.setString(2, target.toString());
             ps.executeUpdate();
         }
         catch (SQLException ex) {
             Utils.plugin.getLogger().log(Level.SEVERE, "Couldn't execute MySQL statement: ", ex);
         }
 
-        if (CACHE.containsKey(src.getUniqueId())) {
-            CACHE.get(src.getUniqueId()).removeTrustedPlayer(target.getUniqueId().toString());
+        if (CACHE.containsKey(src)) {
+            CACHE.get(src).removeTrustedPlayer(target.toString());
         }
     }
 
-    public List<String> getTrustedPlayers(Player player) {
-        if (CACHE.containsKey(player.getUniqueId())) {
-            return CACHE.get(player.getUniqueId()).getTrustedPlayers();
+    public void addTrustedParty(UUID src, String partyId) {
+        String query = "REPLACE INTO " + ConfigManager.getDatabaseTablesPrefix() + "trust_parties (`uuid`, `trusted-uuid`) VALUES(?, ?);";
+
+        try (Connection conn = getSQLConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, src.toString());
+            ps.setString(2, partyId);
+            ps.executeUpdate();
+        }
+        catch (SQLException ex) {
+            Utils.plugin.getLogger().log(Level.SEVERE, "Couldn't execute MySQL statement: ", ex);
+        }
+
+        if (CACHE.containsKey(src)) {
+            CACHE.get(src).addTrustedParty(partyId);
+        }
+        else {
+            loadDataFor(src);
+        }
+    }
+
+    public void removeTrustedParty(UUID src, String partyId) {
+        String query = "DELETE FROM " + ConfigManager.getDatabaseTablesPrefix() + "trust_parties WHERE `uuid` = ? AND `trusted-uuid` = ?;";
+
+        try (Connection conn = getSQLConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, src.toString());
+            ps.setString(2, partyId);
+            ps.executeUpdate();
+        }
+        catch (SQLException ex) {
+            Utils.plugin.getLogger().log(Level.SEVERE, "Couldn't execute MySQL statement: ", ex);
+        }
+
+        if (CACHE.containsKey(src)) {
+            CACHE.get(src).removeTrustedParty(partyId);
+        }
+    }
+
+    public List<String> getTrustedPlayers(UUID player) {
+        if (CACHE.containsKey(player)) {
+            return CACHE.get(player).getTrustedPlayers();
         }
 
         DropPlayer dropPlayer = loadDataFor(player);
         return dropPlayer == null ? Collections.emptyList() : dropPlayer.getTrustedPlayers();
+    }
+
+    public List<String> getTrustedParties(UUID player) {
+        if (CACHE.containsKey(player)) {
+            return CACHE.get(player).getTrustedParties();
+        }
+
+        DropPlayer dropPlayer = loadDataFor(player);
+        return dropPlayer == null ? Collections.emptyList() : dropPlayer.getTrustedParties();
     }
 }

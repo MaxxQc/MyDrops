@@ -9,11 +9,13 @@ public class DropPlayer {
     private final UUID uuid;
     private String glowColor;
     private final List<String> trustedPlayers;
+    private final List<String> trustedParties;
 
-    public DropPlayer(UUID uuid, String glowColor, List<String> trustedPlayers) {
+    public DropPlayer(UUID uuid, String glowColor, List<String> trustedPlayers, List<String> trustedParties) {
         this.uuid = uuid;
         this.glowColor = glowColor;
         this.trustedPlayers = trustedPlayers;
+        this.trustedParties = trustedParties;
     }
 
     public UUID getUUID() {
@@ -41,5 +43,21 @@ public class DropPlayer {
 
     public void removeTrustedPlayer(String player) {
         trustedPlayers.remove(player);
+    }
+
+
+    public void addTrustedParty(String partyId) {
+        if (trustedParties.contains(partyId))
+            return;
+
+        trustedParties.add(partyId);
+    }
+
+    public void removeTrustedParty(String partyId) {
+        trustedParties.remove(partyId);
+    }
+
+    public List<String> getTrustedParties() {
+        return trustedParties;
     }
 }

@@ -5,6 +5,7 @@ authors: [ Maxx_Qc ]
 api-version: "1.13"
 softdepend:
   - MythicMobs
+  - Parties
 permissions:
   mydrops.bypass.pickup:
     description: Allow a player to pickup any item
@@ -34,8 +35,11 @@ permissions:
     description: Give access to the /mydrops config command
     default: op
   mydrops.command.trust:
-    description: Give access to the /mydrops add and /mydrops remove command
+    description: Give access to the /mydrops trust command
     default: true
+  mydrops.command.trust.party:
+    description: Give access to the /mydrops trust addparty and /mydrops trust removeparty command
+    default: op
   mydrops.update:
     description: Anyone with this permission will receive informations from the updater when a new version is available
     default: op

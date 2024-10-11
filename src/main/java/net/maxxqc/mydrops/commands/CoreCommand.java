@@ -3,6 +3,7 @@ package net.maxxqc.mydrops.commands;
 import net.maxxqc.mydrops.utils.ConfigManager;
 import net.maxxqc.mydrops.utils.Constants;
 import net.maxxqc.mydrops.utils.ProtectionTypes;
+import net.maxxqc.mydrops.utils.Utils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -122,7 +123,11 @@ public class CoreCommand implements CommandInterface, TabCompleter {
                 StringUtil.copyPartialMatches(args[1], ConfigManager.CONFIGS_ARGS.keySet(), completions);
             }
             else if (args[0].equalsIgnoreCase("trust") && sender.hasPermission("mydrops.command.trust")) {
-                StringUtil.copyPartialMatches(args[1], Arrays.asList("add", "remove", "list"), completions);
+                StringUtil.copyPartialMatches(args[1],
+                        Utils.isPartiesHooked() && sender.hasPermission("mydrops.command.trust.party") ?
+                                Arrays.asList("add", "addparty", "remove", "removeparty", "list") :
+                                Arrays.asList("add", "remove", "list")
+                        , completions);
             }
         }
         //TODO protection only return enabled protection on server

@@ -1,10 +1,10 @@
 package net.maxxqc.mydrops.utils;
 
 import net.maxxqc.mydrops.databases.IDatabase;
-import net.maxxqc.mydrops.databases.file.FileDatabase;
-import net.maxxqc.mydrops.databases.mongodb.MongoDB;
-import net.maxxqc.mydrops.databases.mysql.MySQL;
-import net.maxxqc.mydrops.databases.sqlite.SQLite;
+import net.maxxqc.mydrops.databases.types.FileDatabase;
+import net.maxxqc.mydrops.databases.types.MongoDB;
+import net.maxxqc.mydrops.databases.types.MySQL;
+import net.maxxqc.mydrops.databases.types.SQLite;
 import net.maxxqc.mydrops.events.AutoUpdaterHandler;
 import net.maxxqc.mydrops.events.HideItemsHandler;
 import net.maxxqc.mydrops.protection.*;
@@ -56,9 +56,13 @@ public class ConfigManager {
     private static String msgCmdTrustUsage;
     private static String msgCmdAddRemoveUsage;
     private static String msgCmdAddSuccess;
+    private static String msgCmdAddSuccessParty;
     private static String msgCmdRemoveSuccess;
+    private static String msgCmdRemoveSuccessParty;
     private static String msgCmdTrustAlreadyTrusted;
+    private static String msgCmdTrustAlreadyTrustedParty;
     private static String msgCmdTrustNotTrusted;
+    private static String msgCmdTrustNotTrustedParty;
     private static String msgCmdTrustList;
     private static String msgCmdTrustSelf;
 
@@ -66,6 +70,7 @@ public class ConfigManager {
     private static String txtConfigGUITitle;
     private static String txtColorGUITitle;
     private static String msgPlayerNotFound;
+    private static String msgYourParty;
     private static String msgDefault;
 
     private static String databaseFormat;
@@ -118,6 +123,12 @@ public class ConfigManager {
         CONFIGS_ARGS.put("options.trash-confirm-close", Arrays.asList("true", "false"));
         config.addDefault("options.allow-close-confirm-with-escape", false);
         CONFIGS_ARGS.put("options.allow-close-confirm-with-escape", Arrays.asList("true", "false"));
+        config.addDefault("hooks.parties.enabled", true);
+        CONFIGS_ARGS.put("hooks.parties.enabled", Arrays.asList("true", "false"));
+        config.addDefault("hooks.parties.players-trust-own-party-by-default", false);
+        CONFIGS_ARGS.put("hooks.parties.players-trust-own-party-by-default", Arrays.asList("true", "false"));
+        config.addDefault("hooks.mythicmobs.enabled", true);
+        CONFIGS_ARGS.put("hooks.mythicmobsenabled.", Arrays.asList("true", "false"));
 
         config.addDefault("database.host", "127.0.0.1");
         CONFIGS_ARGS.put("database.host", Collections.emptyList());
@@ -222,17 +233,25 @@ public class ConfigManager {
         CONFIGS_ARGS.put("messages.commands.trust.usage", Collections.singletonList("{cmd}"));
         config.addDefault("messages.commands.trust.add-remove-usage", "&cUsage: /{cmd} trust {subcmd} <player>");
         CONFIGS_ARGS.put("messages.commands.trust.add-remove-usage", Arrays.asList("{cmd}", "{subcmd}"));
-        config.addDefault("messages.commands.trust.add-success", "&2{player}&a has been added to your trusted players");
+        config.addDefault("messages.commands.trust.add-success", "&2{player}&a has been added to your trusted list");
         CONFIGS_ARGS.put("messages.commands.trust.add-success", Collections.singletonList("{player}"));
-        config.addDefault("messages.commands.trust.remove-success", "&2{player}&a has been removed from your trusted players");
+        config.addDefault("messages.commands.trust.add-success-party", "&2{party}&a has been added to your trusted list");
+        CONFIGS_ARGS.put("messages.commands.trust.add-success-party", Collections.singletonList("{party}"));
+        config.addDefault("messages.commands.trust.remove-success", "&2{player}&a has been removed from your trusted list");
         CONFIGS_ARGS.put("messages.commands.trust.remove-success", Collections.singletonList("{player}"));
-        config.addDefault("messages.commands.trust.already-trusted", "&4{player}&c is already part of your trusted players");
+        config.addDefault("messages.commands.trust.remove-success-party", "&2{party}&a has been removed from your trusted list");
+        CONFIGS_ARGS.put("messages.commands.trust.remove-success-party", Collections.singletonList("{party}"));
+        config.addDefault("messages.commands.trust.already-trusted", "&4{player}&c is already part of your trusted list");
         CONFIGS_ARGS.put("messages.commands.trust.already-trusted", Collections.singletonList("{player}"));
-        config.addDefault("messages.commands.trust.not-trusted", "&4{player}&c is not part of your trusted players");
+        config.addDefault("messages.commands.trust.already-trusted-party", "&4{party}&c is already part of your trusted list");
+        CONFIGS_ARGS.put("messages.commands.trust.already-trusted-party", Collections.singletonList("{party}"));
+        config.addDefault("messages.commands.trust.not-trusted", "&4{player}&c is not part of your trusted list");
         CONFIGS_ARGS.put("messages.commands.trust.not-trusted", Collections.singletonList("{player}"));
+        config.addDefault("messages.commands.trust.not-trusted-party", "&4{party}&c is not part of your trusted list");
+        CONFIGS_ARGS.put("messages.commands.trust.not-trusted-party", Collections.singletonList("{party}"));
         config.addDefault("messages.commands.trust.list", "&eTrusted players ({count}): &6{players}");
         CONFIGS_ARGS.put("messages.commands.trust.list", Arrays.asList("{count}", "{players}"));
-        config.addDefault("messages.commands.trust.self", "&cYou cannot add yourself to your trusted players");
+        config.addDefault("messages.commands.trust.self", "&cYou cannot add yourself to your trusted list");
         CONFIGS_ARGS.put("messages.commands.trust.self", Collections.emptyList());
         CONFIGS_ARGS.put("messages.commands.invalid-item", Collections.emptyList());
         config.addDefault("messages.gui.confirmation.title", "&6Confirm?");
@@ -245,6 +264,8 @@ public class ConfigManager {
         CONFIGS_ARGS.put("messages.player-not-found", Collections.singletonList("{player}"));
         config.addDefault("messages.empty", "empty");
         CONFIGS_ARGS.put("messages.empty", Collections.emptyList());
+        config.addDefault("messages.your-party", "Your party");
+        CONFIGS_ARGS.put("messages.your-party", Collections.emptyList());
         config.addDefault("messages.selected-suffix", " (selected)");
         CONFIGS_ARGS.put("messages.selected-suffix", Collections.emptyList());
         config.addDefault("messages.default", "&b&oDefault value");
@@ -260,7 +281,7 @@ public class ConfigManager {
         CONFIGS_ARGS.put("messages.help.protection", Collections.singletonList("{cmd}"));
         config.addDefault("messages.help.trash", "&6/{cmd} trash &e - Opens up a trash bin container");
         CONFIGS_ARGS.put("messages.help.trash", Collections.singletonList("{cmd}"));
-        config.addDefault("messages.help.trust", "&6/{cmd} trust <add/remove/list> [player] &e - Controls your trusted players list");
+        config.addDefault("messages.help.trust", "&6/{cmd} trust <add/addparty/remove/removeparty/list> [player] &e - Controls your trusted list");
         CONFIGS_ARGS.put("messages.help.trust", Collections.singletonList("{cmd}"));
         config.addDefault("messages.help.config", "&6/{cmd} config [key] [value] &e - Defines the value of a setting or open the config GUI");
         CONFIGS_ARGS.put("messages.help.config", Collections.singletonList("{cmd}"));
@@ -314,12 +335,11 @@ public class ConfigManager {
                 database = new SQLite();
         }
 
-        plugin.getLogger().info("Using " + database.getClass().getSimpleName() + " database");
-
         database.load();
     }
 
     // Register event handlers here because of reload command
+    // Will need to refactor this...
     private static void registerEventHandlers() {
         Bukkit.getServer().getPluginManager().registerEvents(Utils.getGuiManager(), plugin);
 
@@ -346,7 +366,7 @@ public class ConfigManager {
         if (hasPlayerDeathProtection())
             Bukkit.getServer().getPluginManager().registerEvents(new PlayerDeathHandler(), plugin);
 
-        if (hasMythicMobsProtection() && Bukkit.getServer().getPluginManager().isPluginEnabled("MythicMobs")) {
+        if (hasHookMythicMobs() && Bukkit.getServer().getPluginManager().isPluginEnabled("MythicMobs")) {
             plugin.getLogger().info("MythicMobs is enabled, hooking into it for event handling");
             Bukkit.getServer().getPluginManager().registerEvents(new MythicMobsHandler(), plugin);
         }
@@ -388,12 +408,17 @@ public class ConfigManager {
         msgCmdConfigShiftClick = null;
         msgCmdTrustUsage = null;
         msgCmdAddSuccess = null;
+        msgCmdAddSuccessParty = null;
         msgCmdTrustAlreadyTrusted = null;
+        msgCmdTrustAlreadyTrustedParty = null;
         msgCmdTrustList = null;
         msgCmdTrustSelf = null;
         msgCmdAddRemoveUsage = null;
         msgCmdTrustNotTrusted = null;
+        msgCmdTrustNotTrustedParty = null;
         msgCmdRemoveSuccess = null;
+        msgCmdRemoveSuccessParty = null;
+        msgYourParty = null;
         txtConfirmTitle = null;
         txtConfigGUITitle = null;
         glowColor = null;
@@ -720,30 +745,51 @@ public class ConfigManager {
 
     public static String getMsgCmdAddSuccess() {
         if (msgCmdAddSuccess == null)
-            msgCmdAddSuccess = Utils.colorize(config.getString("messages.commands.trust.add-success", "&2{player}&a has been added to your trusted players"));
+            msgCmdAddSuccess = Utils.colorize(config.getString("messages.commands.trust.add-success", "&2{player}&a has been added to your trusted list"));
 
         return msgCmdAddSuccess;
     }
 
+    public static String getMsgCmdAddSuccessParty() {
+        if (msgCmdAddSuccessParty == null)
+            msgCmdAddSuccessParty = Utils.colorize(config.getString("messages.commands.trust.add-success-party", "&2{party}&a has been added to your trusted list"));
+
+        return msgCmdAddSuccessParty;
+    }
+
     public static String getMsgCmdRemoveSuccess() {
         if (msgCmdRemoveSuccess == null)
-            msgCmdRemoveSuccess = Utils.colorize(config.getString("messages.commands.trust.remove-success", "&2{player}&a has been removed from your trusted players"));
+            msgCmdRemoveSuccess = Utils.colorize(config.getString("messages.commands.trust.remove-success", "&2{player}&a has been removed from your trusted list"));
 
         return msgCmdRemoveSuccess;
     }
 
+    public static String getMsgCmdRemoveSuccessParty() {
+        if (msgCmdRemoveSuccessParty == null)
+            msgCmdRemoveSuccessParty = Utils.colorize(config.getString("messages.commands.trust.remove-success-party", "&2{party}&a has been removed from your trusted list"));
+
+        return msgCmdRemoveSuccessParty;
+    }
+
     public static String getMsgCmdTrustAlreadyTrusted() {
         if (msgCmdTrustAlreadyTrusted == null)
-            msgCmdTrustAlreadyTrusted = Utils.colorize(config.getString("messages.commands.trust.already-trusted", "&4{player}&c is already part of your trusted players"));
+            msgCmdTrustAlreadyTrusted = Utils.colorize(config.getString("messages.commands.trust.already-trusted", "&4{player}&c is already part of your trusted list"));
 
         return msgCmdTrustAlreadyTrusted;
     }
 
     public static String getMsgCmdTrustNotTrusted() {
         if (msgCmdTrustNotTrusted == null)
-            msgCmdTrustNotTrusted = Utils.colorize(config.getString("messages.commands.trust.not-trusted", "&4{player}&c is not part of your trusted players"));
+            msgCmdTrustNotTrusted = Utils.colorize(config.getString("messages.commands.trust.not-trusted", "&4{player}&c is not part of your trusted list"));
 
         return msgCmdTrustNotTrusted;
+    }
+
+    public static String getMsgCmdTrustNotTrustedParty() {
+        if (msgCmdTrustNotTrustedParty == null)
+            msgCmdTrustNotTrustedParty = Utils.colorize(config.getString("messages.commands.trust.not-trusted-party", "&4{party}&c is not part of your trusted list"));
+
+        return msgCmdTrustNotTrustedParty;
     }
 
     public static String getMsgCmdTrustList() {
@@ -755,7 +801,7 @@ public class ConfigManager {
 
     public static String getMsgCmdTrustSelf() {
         if (msgCmdTrustSelf == null)
-            msgCmdTrustSelf = Utils.colorize(config.getString("messages.commands.trust.self", "&cYou cannot add yourself to your trusted players"));
+            msgCmdTrustSelf = Utils.colorize(config.getString("messages.commands.trust.self", "&cYou cannot add yourself to your trusted list"));
 
         return msgCmdTrustSelf;
     }
@@ -865,6 +911,10 @@ public class ConfigManager {
         return keys;
     }
 
+    public static boolean isConfigurationSection(String path) {
+        return config.isConfigurationSection(path);
+    }
+
     public static Object getValue(String key) {
         return config.get(key);
     }
@@ -905,7 +955,7 @@ public class ConfigManager {
 
     public static String getMsgHelpTrust() {
         if (msgHelpTrust == null)
-            msgHelpTrust = Utils.colorize(config.getString("messages.help.trust", "&6/{cmd} trust <add/remove/list> [player] &e - Controls your trusted players list"));
+            msgHelpTrust = Utils.colorize(config.getString("messages.help.trust", "&6/{cmd} trust <add/addparty/remove/removeparty/list> [player] &e - Controls your trusted list"));
         return msgHelpTrust;
     }
 
@@ -923,5 +973,30 @@ public class ConfigManager {
 
     public static boolean getHideDropsFromOthers() {
         return config.getBoolean("options.hide-drops-from-others", true);
+    }
+
+    public static boolean hasHookParties() {
+        return config.getBoolean("hooks.parties.enabled", true);
+    }
+
+    public static boolean hasHookMythicMobs() {
+        return config.getBoolean("hooks.mythicmobs.enabled", true);
+    }
+
+    public static boolean doPlayersTrustTheirParty() {
+        return config.getBoolean("hooks.parties.players-trust-own-party-by-default", false);
+    }
+
+    public static String getMsgYourParty() {
+        if (msgYourParty == null)
+            msgYourParty = Utils.colorize(config.getString("messages.your-party", "Your party"));
+
+        return msgYourParty;
+    }
+
+    public static String getMsgCmdTrustAlreadyTrustedParty() {
+        if (msgCmdTrustAlreadyTrustedParty == null)
+            msgCmdTrustAlreadyTrustedParty = Utils.colorize(config.getString("messages.commands.trust.already-trusted-party", "&4{party}&c is already part of your trusted list"));
+        return msgCmdTrustAlreadyTrustedParty;
     }
 }
