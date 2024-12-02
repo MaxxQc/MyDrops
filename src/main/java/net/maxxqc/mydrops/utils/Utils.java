@@ -396,24 +396,25 @@ public class Utils {
         UUID ownerUuid = UUID.fromString(owner);
         Set<String> canPickupList = new HashSet<>(ConfigManager.getDatabase().getTrustedPlayers(ownerUuid));
 
-        Party ownerParty = partiesAPI.getPartyOfPlayer(ownerUuid);
-
-        for (String partyUuid : ConfigManager.getDatabase().getTrustedParties(ownerUuid))
+        if (partiesAPI != null)
         {
-            System.out.println("has a trusted party: " + partyUuid);
+            Party ownerParty = partiesAPI.getPartyOfPlayer(ownerUuid);
 
-            Party party = partiesAPI.getParty(partyUuid);
-
-            if (party == null && partyUuid.equals(owner))
+            for (String partyUuid : ConfigManager.getDatabase().getTrustedParties(ownerUuid))
             {
-                party = ownerParty;
+                Party party = partiesAPI.getParty(partyUuid);
+
+                if (party == null && partyUuid.equals(owner))
+                {
+                    party = ownerParty;
+
+                    if (party == null) continue;
+                }
 
                 if (party == null) continue;
+
+                canPickupList.addAll(party.getMembers().stream().map(UUID::toString).toList());
             }
-
-            if (party == null) continue;
-
-            canPickupList.addAll(party.getMembers().stream().map(UUID::toString).toList());
         }
 
         canPickupList.add(owner);

@@ -37,25 +37,6 @@ public class SpigetUpdater
         return !version.equals(updatedVersion);
     }
 
-    public DownloadMessage downloadPlugin() {
-        if (checkForUpdate()) {
-            try {
-                if (!isExternal) {
-                    if(!isPremium) {
-                        URL downloadURL = new URL("https://api.spiget.org/v2/resources/" + Constants.SPIGOT_RESOURCE_ID + "/download");
-                        ReadableByteChannel rbc = Channels.newChannel(downloadURL.openStream());
-                        FileOutputStream fos = new FileOutputStream(FileSystems.getDefault().getPath("").toAbsolutePath() + "/plugins/" + this.pluginName + " [" + this.updatedVersion + "].jar");
-                        fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
-                        return DownloadMessage.SUCCESS;
-                    } else return DownloadMessage.PREMIUMRESOURCE;
-                } else return DownloadMessage.EXTERNALDOWNLOAD;
-            } catch (Exception e) {
-                e.printStackTrace();
-                return DownloadMessage.FAILED;
-            }
-        } else return DownloadMessage.ALREADYUPDATED;
-    }
-
     private void gatheredInformation() {
         try {
             JsonElement info = parseJSON("https://api.spiget.org/v2/resources/" + Constants.SPIGOT_RESOURCE_ID);
