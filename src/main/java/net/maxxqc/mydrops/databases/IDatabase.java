@@ -1,5 +1,6 @@
 package net.maxxqc.mydrops.databases;
 
+import net.maxxqc.mydrops.utils.ProtectionType;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
@@ -114,6 +115,20 @@ public abstract class IDatabase {
     }
 
     public abstract List<String> getTrustedParties(UUID src);
+
+    public void setProtection(Player player, ProtectionType protectionType, boolean value)
+    {
+        setProtection(player.getUniqueId(), protectionType, value);
+    }
+
+    public abstract void setProtection(UUID src, ProtectionType protectionType, boolean value);
+
+    public boolean getProtection(Player player, ProtectionType protectionType)
+    {
+        return getProtection(player.getUniqueId(), protectionType);
+    }
+
+    public abstract boolean getProtection(UUID src, ProtectionType protectionType);
 
     public abstract void load();
 

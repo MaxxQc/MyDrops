@@ -9,10 +9,12 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityPickupItemEvent;
+import org.bukkit.event.entity.ItemMergeEvent;
 import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 public class ProtectionHandler implements Listener {
@@ -21,7 +23,7 @@ public class ProtectionHandler implements Listener {
         List<String> canPickupList = Utils.parseItem(e.getEntity());
         if (canPickupList == null)
             return;
-        Utils.handleItemDrop(e.getEntity(), Bukkit.getPlayer(UUID.fromString(canPickupList.get(canPickupList.size() - 1))));
+        Utils.protectItemDrop(e.getEntity(), Bukkit.getPlayer(UUID.fromString(canPickupList.get(canPickupList.size() - 1))));
     }
 
     @EventHandler
@@ -31,6 +33,14 @@ public class ProtectionHandler implements Listener {
 
         e.setCancelled(true);
         Utils.removeProtectedItem(e.getItem().getUniqueId());
+    }
+
+    @EventHandler
+    private void onMerge(ItemMergeEvent e) {
+        if (Objects.equals(Utils.getItemOwner(e.getEntity()), Utils.getItemOwner(e.getTarget())))
+            return;
+
+        e.setCancelled(true);
     }
 
     @EventHandler

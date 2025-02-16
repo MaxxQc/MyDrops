@@ -24,7 +24,7 @@ permissions:
     default: true
   mydrops.command.protection:
     description: Give access to the /mydrops protection command
-    default: false
+    default: op
   mydrops.command.trash:
     description: Give access to the /mydrops trash command
     default: op

@@ -1,5 +1,7 @@
 package net.maxxqc.mydrops.protection;
 
+import net.maxxqc.mydrops.utils.ConfigManager;
+import net.maxxqc.mydrops.utils.ProtectionType;
 import net.maxxqc.mydrops.utils.Utils;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Player;
@@ -15,10 +17,9 @@ public class ItemFrameDropHandler implements Listener
     @EventHandler
     private void onEntityDmgByEntity(EntityDamageByEntityEvent e)
     {
-        if (!(e.getEntity() instanceof ItemFrame))
+        if (!(e.getEntity() instanceof ItemFrame ifr))
             return;
 
-        ItemFrame ifr = (ItemFrame) e.getEntity();
         Player owner;
 
         if (e.getDamager() instanceof Player)
@@ -26,6 +27,9 @@ public class ItemFrameDropHandler implements Listener
         else if (e.getDamager() instanceof Projectile && ((Projectile) e.getDamager()).getShooter() instanceof Player)
             owner = (Player) ((Projectile) e.getDamager()).getShooter();
         else
+            return;
+
+        if (!ConfigManager.getDatabase().getProtection(owner, ProtectionType.ITEM_FRAME_DROP))
             return;
 
         ifr.setItem(Utils.setItemStackOwner(ifr.getItem(), owner, true), false);

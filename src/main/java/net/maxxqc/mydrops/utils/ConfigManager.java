@@ -43,6 +43,7 @@ public class ConfigManager {
     private static String msgCmdConfigRightClick;
     private static String msgCmdConfigLeftClick;
     private static String msgCmdConfigShiftClick;
+    private static String msgCmdProtectionInvalidValue;
 
     private static String msgHelpHeader;
     private static String msgHelpCore;
@@ -54,6 +55,7 @@ public class ConfigManager {
     private static String msgHelpReload;
 
     private static String msgCmdTrustUsage;
+    private static String msgCmdProtectionUsage;
     private static String msgCmdAddRemoveUsage;
     private static String msgCmdAddSuccess;
     private static String msgCmdAddSuccessParty;
@@ -65,6 +67,8 @@ public class ConfigManager {
     private static String msgCmdTrustNotTrustedParty;
     private static String msgCmdTrustList;
     private static String msgCmdTrustSelf;
+    private static String msgCmdProtectionInvalidType;
+    private static String msgCmdProtectionSet;
 
     private static String txtConfirmTitle;
     private static String txtConfigGUITitle;
@@ -72,6 +76,8 @@ public class ConfigManager {
     private static String msgPlayerNotFound;
     private static String msgYourParty;
     private static String msgDefault;
+    private static String msgEnabled;
+    private static String msgDisabled;
 
     private static String databaseFormat;
 
@@ -231,6 +237,8 @@ public class ConfigManager {
         CONFIGS_ARGS.put("messages.commands.invalid-item", Collections.emptyList());
         config.addDefault("messages.commands.trust.usage", "&cUsage: /{cmd} trust <add/remove/list> [player]");
         CONFIGS_ARGS.put("messages.commands.trust.usage", Collections.singletonList("{cmd}"));
+        config.addDefault("messages.commands.protection.usage", "&cUsage: /{cmd} protection <protection type/list> [true/false]");
+        CONFIGS_ARGS.put("messages.commands.protection.usage", Collections.singletonList("{cmd}"));
         config.addDefault("messages.commands.trust.add-remove-usage", "&cUsage: /{cmd} trust {subcmd} <player>");
         CONFIGS_ARGS.put("messages.commands.trust.add-remove-usage", Arrays.asList("{cmd}", "{subcmd}"));
         config.addDefault("messages.commands.trust.add-success", "&2{player}&a has been added to your trusted list");
@@ -253,7 +261,12 @@ public class ConfigManager {
         CONFIGS_ARGS.put("messages.commands.trust.list", Arrays.asList("{count}", "{players}"));
         config.addDefault("messages.commands.trust.self", "&cYou cannot add yourself to your trusted list");
         CONFIGS_ARGS.put("messages.commands.trust.self", Collections.emptyList());
-        CONFIGS_ARGS.put("messages.commands.invalid-item", Collections.emptyList());
+        config.addDefault("messages.commands.protection.invalid-type", "&cInvalid protection type: &4{type}");
+        CONFIGS_ARGS.put("messages.commands.protection.invalid-type", Collections.singletonList("{type}"));
+        config.addDefault("messages.commands.protection.set", "&aProtection type &2{type} &ahas been {status}");
+        CONFIGS_ARGS.put("messages.commands.protection.set", Arrays.asList("{type}", "{status}"));
+        CONFIGS_ARGS.put("messages.commands.protection.invalid-value", Arrays.asList("{type}", "{value}"));
+        config.addDefault("messages.commands.protection.invalid-value", "&cInvalid value &4&o{value} &cfor protection type &4&o{type}");
         config.addDefault("messages.gui.confirmation.title", "&6Confirm?");
         CONFIGS_ARGS.put("messages.gui.confirmation.title", Collections.emptyList());
         config.addDefault("messages.gui.config.title", "&aConfiguration - {key}");
@@ -270,6 +283,10 @@ public class ConfigManager {
         CONFIGS_ARGS.put("messages.selected-suffix", Collections.emptyList());
         config.addDefault("messages.default", "&b&oDefault value");
         CONFIGS_ARGS.put("messages.default", Collections.emptyList());
+        config.addDefault("messages.enabled", "&2enabled");
+        CONFIGS_ARGS.put("messages.enabled", Collections.emptyList());
+        config.addDefault("messages.disabled", "&4disabled");
+        CONFIGS_ARGS.put("messages.disabled", Collections.emptyList());
 
         config.addDefault("messages.help.header", "&eAll commands are:");
         CONFIGS_ARGS.put("messages.help.header", Collections.emptyList());
@@ -277,7 +294,7 @@ public class ConfigManager {
         CONFIGS_ARGS.put("messages.help.core", Collections.singletonList("{cmd}"));
         config.addDefault("messages.help.glowcolor", "&6/{cmd} glowcolor [color]&e - Defines a new glowing color for yourself or open the color selection GUI");
         CONFIGS_ARGS.put("messages.help.glowcolor", Collections.singletonList("{cmd}"));
-        config.addDefault("messages.help.protection", "&6/{cmd} protection <protection type> <true/false>&e - Toggles a protection rule for yourself");
+        config.addDefault("messages.help.protection", "&6/{cmd} protection <protection type/list> [true/false]&e - Toggles a protection rule for yourself");
         CONFIGS_ARGS.put("messages.help.protection", Collections.singletonList("{cmd}"));
         config.addDefault("messages.help.trash", "&6/{cmd} trash &e - Opens up a trash bin container");
         CONFIGS_ARGS.put("messages.help.trash", Collections.singletonList("{cmd}"));
@@ -306,6 +323,9 @@ public class ConfigManager {
         defaultBackItem = Utils.createItemStack(Material.BARRIER, "&cBack");
         defaultCloseItem = Utils.createItemStack(Material.BARRIER, "&cClose");
         defaultNoneItem = Utils.createItemStack(Material.WHITE_WOOL, "&f&oNone");
+
+        msgEnabled = config.getString("messages.enabled", "&2enabled");
+        msgDisabled = config.getString("messages.disabled", "&4disabled");
 
         config.addDefault("items.gui.back", defaultBackItem);
         CONFIGS_ARGS.put("items.gui.back", Collections.singletonList("reset"));
@@ -345,28 +365,28 @@ public class ConfigManager {
 
         Bukkit.getServer().getPluginManager().registerEvents(new ProtectionHandler(), plugin);
 
-        if (hasItemDropProtection())
+        if (hasServerProtection(ProtectionType.ITEM_DROP))
             Bukkit.getServer().getPluginManager().registerEvents(new ItemDropHandler(), plugin);
 
-        if (hasBlockBreakProtection())
+        if (hasServerProtection(ProtectionType.BLOCK_BREAK))
             Bukkit.getServer().getPluginManager().registerEvents(new BlockBreakHandler(), plugin);
 
-        if (hasVehicleDestroyProtection())
+        if (hasServerProtection(ProtectionType.VEHICLE_DESTROY))
             Bukkit.getServer().getPluginManager().registerEvents(new VehicleDestroyHandler(), plugin);
 
-        if (hasHangingBreakProtection())
+        if (hasServerProtection(ProtectionType.HANGING_BREAK))
             Bukkit.getServer().getPluginManager().registerEvents(new HangingBreakHandler(), plugin);
 
-        if (hasItemFrameDropProtection())
+        if (hasServerProtection(ProtectionType.ITEM_FRAME_DROP))
             Bukkit.getServer().getPluginManager().registerEvents(new ItemFrameDropHandler(), plugin);
 
-        if (hasEntityKillProtection())
+        if (hasServerProtection(ProtectionType.ENTITY_KILL))
             Bukkit.getServer().getPluginManager().registerEvents(new EntityKillHandler(), plugin);
 
-        if (hasPlayerDeathProtection())
+        if (hasServerProtection(ProtectionType.PLAYER_DEATH))
             Bukkit.getServer().getPluginManager().registerEvents(new PlayerDeathHandler(), plugin);
 
-        if (hasHookMythicMobs() && Bukkit.getServer().getPluginManager().isPluginEnabled("MythicMobs")) {
+        if (hasHookMythicMobs() && hasServerProtection(ProtectionType.MYTHIC_MOBS) && Bukkit.getServer().getPluginManager().isPluginEnabled("MythicMobs")) {
             plugin.getLogger().info("MythicMobs is enabled, hooking into it for event handling");
             Bukkit.getServer().getPluginManager().registerEvents(new MythicMobsHandler(), plugin);
         }
@@ -388,6 +408,7 @@ public class ConfigManager {
 
     private static void clearCache() {
         msgCmdPlayerOnly = null;
+        msgCmdProtectionInvalidValue = null;
         msgCmdReloaded = null;
         msgCmdInvalidItem = null;
         msgCmdTrashTitle = null;
@@ -407,6 +428,7 @@ public class ConfigManager {
         msgCmdConfigLeftClick = null;
         msgCmdConfigShiftClick = null;
         msgCmdTrustUsage = null;
+        msgCmdProtectionUsage = null;
         msgCmdAddSuccess = null;
         msgCmdAddSuccessParty = null;
         msgCmdTrustAlreadyTrusted = null;
@@ -418,6 +440,8 @@ public class ConfigManager {
         msgCmdTrustNotTrustedParty = null;
         msgCmdRemoveSuccess = null;
         msgCmdRemoveSuccessParty = null;
+        msgCmdProtectionInvalidType = null;
+        msgCmdProtectionSet = null;
         msgYourParty = null;
         txtConfirmTitle = null;
         txtConfigGUITitle = null;
@@ -442,6 +466,8 @@ public class ConfigManager {
         msgHelpTrust = null;
         msgHelpConfig = null;
         msgHelpReload = null;
+        msgEnabled = null;
+        msgDisabled = null;
     }
 
     public static IDatabase getDatabase() {
@@ -496,8 +522,7 @@ public class ConfigManager {
         if (glowColor == null) {
             try {
                 glowColor = ChatColor.valueOf(config.getString("options.default-glow-color", "AQUA").toUpperCase());
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 glowColor = ChatColor.AQUA;
                 e.printStackTrace();
             }
@@ -518,36 +543,36 @@ public class ConfigManager {
         return config.getInt("options.protection-expiry", 0) > 0;
     }
 
-    public static boolean hasItemDropProtection() {
-        return config.getBoolean("protection.item-drop.enable", true);
-    }
-
-    public static boolean hasBlockBreakProtection() {
-        return config.getBoolean("protection.block-break.enable", true);
-    }
-
-    public static boolean hasVehicleDestroyProtection() {
-        return config.getBoolean("protection.vehicle-destroy.enable", true);
-    }
-
-    public static boolean hasHangingBreakProtection() {
-        return config.getBoolean("protection.hanging-break.enable", true);
-    }
-
-    public static boolean hasItemFrameDropProtection() {
-        return config.getBoolean("protection.item-frame-drop.enable", true);
-    }
-
-    public static boolean hasEntityKillProtection() {
-        return config.getBoolean("protection.entity-kill.enable", true);
-    }
-
-    public static boolean hasPlayerDeathProtection() {
-        return config.getBoolean("protection.player-death.enable", false);
-    }
-
-    public static boolean hasMythicMobsProtection() {
-        return config.getBoolean("protection.mythic-mobs.enable", false);
+    public static boolean hasServerProtection(ProtectionType type) {
+        switch (type) {
+            case BLOCK_BREAK -> {
+                return config.getBoolean("protection.block-break.enable", true);
+            }
+            case ENTITY_KILL -> {
+                return config.getBoolean("protection.entity-kill.enable", true);
+            }
+            case HANGING_BREAK -> {
+                return config.getBoolean("protection.hanging-break.enable", true);
+            }
+            case ITEM_DROP -> {
+                return config.getBoolean("protection.item-drop.enable", true);
+            }
+            case ITEM_FRAME_DROP -> {
+                return config.getBoolean("protection.item-frame-drop.enable", true);
+            }
+            case PLAYER_DEATH -> {
+                return config.getBoolean("protection.player-death.enable", false);
+            }
+            case VEHICLE_DESTROY -> {
+                return config.getBoolean("protection.vehicle-destroy.enable", true);
+            }
+            case MYTHIC_MOBS -> {
+                return config.getBoolean("protection.mythic-mobs.enable", false);
+            }
+            default -> {
+                return false;
+            }
+        }
     }
 
     public static boolean hasBStats() {
@@ -595,6 +620,14 @@ public class ConfigManager {
             msgCmdConfigInvalidValue = Utils.colorize(config.getString("messages.commands.config.invalid-value", "&cInvalid config value &4&o{value}&c for key &4&o{key}"));
 
         return msgCmdConfigInvalidValue;
+    }
+
+    public static String getMsgCmdProtectionInvalidValue(ProtectionType protectionType, String input)
+    {
+        if (msgCmdProtectionInvalidValue == null)
+            msgCmdProtectionInvalidValue = Utils.colorize(config.getString("messages.commands.protection.invalid-value", "&cInvalid value &4&o{value} &cfor protection type &4&o{type}"));
+
+        return msgCmdProtectionInvalidValue.replace("{type}", protectionType.getStringValue()).replace("{value}", input);
     }
 
     public static String getMsgCmdConfigPosValue() {
@@ -736,6 +769,13 @@ public class ConfigManager {
         return msgCmdTrustUsage;
     }
 
+    public static String getMsgCmdProtectionUsage(String cmd) {
+        if (msgCmdProtectionUsage == null)
+            msgCmdProtectionUsage = Utils.colorize(config.getString("messages.commands.protection.usage", "&cUsage: /{cmd} protection <protection type/list> [true/false]"));
+
+        return msgCmdProtectionUsage.replace("{cmd}", cmd);
+    }
+
     public static String getMsgCmdAddRemoveUsage() {
         if (msgCmdAddRemoveUsage == null)
             msgCmdAddRemoveUsage = Utils.colorize(config.getString("messages.commands.trust.add-remove-usage", "&cUsage: /{cmd} trust {subcmd} <player>"));
@@ -807,7 +847,7 @@ public class ConfigManager {
     }
 
     public static boolean hasPerPlayerProtection() {
-        return false; //TODO config.getBoolean("options.per-player-protection", false);
+        return config.getBoolean("options.per-player-protection", false);
     }
 
     public static boolean isWorldListBlacklist() {
@@ -943,7 +983,7 @@ public class ConfigManager {
 
     public static String getMsgHelpProtection() {
         if (msgHelpProtection == null)
-            msgHelpProtection = Utils.colorize(config.getString("messages.help.protection", "&6/{cmd} protection <protection type> <true/false>&e - Toggles a protection rule for yourself"));
+            msgHelpProtection = Utils.colorize(config.getString("messages.help.protection", "&6/{cmd} protection <protection type/list> [true/false]&e - Toggles a protection rule for yourself"));
         return msgHelpProtection;
     }
 
@@ -998,5 +1038,17 @@ public class ConfigManager {
         if (msgCmdTrustAlreadyTrustedParty == null)
             msgCmdTrustAlreadyTrustedParty = Utils.colorize(config.getString("messages.commands.trust.already-trusted-party", "&4{party}&c is already part of your trusted list"));
         return msgCmdTrustAlreadyTrustedParty;
+    }
+
+    public static String getMsgCmdProtectionInvalidType(String input) {
+        if (msgCmdProtectionInvalidType == null)
+            msgCmdProtectionInvalidType = Utils.colorize(config.getString("messages.commands.protection.invalid-type", "&cInvalid protection type: &4{type}"));
+        return msgCmdProtectionInvalidType.replace("{type}", input);
+    }
+
+    public static String getMsgCmdProtectionSet(ProtectionType protectionType, boolean value) {
+        if (msgCmdProtectionSet == null)
+            msgCmdProtectionSet = Utils.colorize(config.getString("messages.commands.protection.set", "&aProtection type &2{type} &ahas been {status}"));
+        return msgCmdProtectionSet.replace("{type}", protectionType.getStringValue()).replace("{status}", value ? msgEnabled : msgDisabled);
     }
 }

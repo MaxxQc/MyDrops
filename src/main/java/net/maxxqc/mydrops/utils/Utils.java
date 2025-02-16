@@ -74,13 +74,13 @@ public class Utils {
                 metrics.addCustomChart(new SimplePie("option_glowcolor", () -> ConfigManager.getGlowColor().toString()));
             }
 
-            metrics.addCustomChart(new SimplePie("protection_item-drop", () -> String.valueOf(ConfigManager.hasItemDropProtection())));
-            metrics.addCustomChart(new SimplePie("protection_block-break", () -> String.valueOf(ConfigManager.hasBlockBreakProtection())));
-            metrics.addCustomChart(new SimplePie("protection_item-frame-drop", () -> String.valueOf(ConfigManager.hasItemFrameDropProtection())));
-            metrics.addCustomChart(new SimplePie("protection_vehicle-destroy", () -> String.valueOf(ConfigManager.hasVehicleDestroyProtection())));
-            metrics.addCustomChart(new SimplePie("protection_hanging-break", () -> String.valueOf(ConfigManager.hasHangingBreakProtection())));
-            metrics.addCustomChart(new SimplePie("protection_entity-kill", () -> String.valueOf(ConfigManager.hasEntityKillProtection())));
-            metrics.addCustomChart(new SimplePie("protection_player-death", () -> String.valueOf(ConfigManager.hasPlayerDeathProtection())));
+            metrics.addCustomChart(new SimplePie("protection_item-drop", () -> String.valueOf(ConfigManager.hasServerProtection(ProtectionType.ITEM_DROP))));
+            metrics.addCustomChart(new SimplePie("protection_block-break", () -> String.valueOf(ConfigManager.hasServerProtection(ProtectionType.BLOCK_BREAK))));
+            metrics.addCustomChart(new SimplePie("protection_item-frame-drop", () -> String.valueOf(ConfigManager.hasServerProtection(ProtectionType.ITEM_FRAME_DROP))));
+            metrics.addCustomChart(new SimplePie("protection_vehicle-destroy", () -> String.valueOf(ConfigManager.hasServerProtection(ProtectionType.VEHICLE_DESTROY))));
+            metrics.addCustomChart(new SimplePie("protection_hanging-break", () -> String.valueOf(ConfigManager.hasServerProtection(ProtectionType.HANGING_BREAK))));
+            metrics.addCustomChart(new SimplePie("protection_entity-kill", () -> String.valueOf(ConfigManager.hasServerProtection(ProtectionType.ENTITY_KILL))));
+            metrics.addCustomChart(new SimplePie("protection_player-death", () -> String.valueOf(ConfigManager.hasServerProtection(ProtectionType.PLAYER_DEATH))));
 
             plugin.getLogger().info("Successfully loaded bStats");
         }
@@ -133,7 +133,7 @@ public class Utils {
         }
     }
 
-    public static void handleItemDrop(Item item, Player player) {
+    public static void protectItemDrop(Item item, Player player) {
         if (player == null || player.hasPermission("mydrops.bypass.drop"))
             return;
 
@@ -384,6 +384,10 @@ public class Utils {
 
     public static void delayCloseInv(Player player) {
         Bukkit.getScheduler().runTaskLater(plugin, player::closeInventory, 1);
+    }
+
+    public static String getItemOwner(Item item) {
+        return item.getPersistentDataContainer().get(namespacedKey, PersistentDataType.STRING);
     }
 
     public static boolean canPickup(Player player, Item item) {

@@ -1,5 +1,7 @@
 package net.maxxqc.mydrops.protection;
 
+import net.maxxqc.mydrops.utils.ConfigManager;
+import net.maxxqc.mydrops.utils.ProtectionType;
 import net.maxxqc.mydrops.utils.Utils;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
@@ -22,6 +24,9 @@ public class VehicleDestroyHandler implements Listener
         else if (e.getAttacker() instanceof Projectile && ((Projectile) e.getAttacker()).getShooter() instanceof Player)
             owner = (Player) ((Projectile) e.getAttacker()).getShooter();
         else
+            return;
+
+        if (!ConfigManager.getDatabase().getProtection(owner, ProtectionType.VEHICLE_DESTROY))
             return;
 
         e.setCancelled(true);

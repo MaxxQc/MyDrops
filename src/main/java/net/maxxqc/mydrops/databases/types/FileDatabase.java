@@ -2,6 +2,7 @@ package net.maxxqc.mydrops.databases.types;
 
 import net.maxxqc.mydrops.databases.IDatabase;
 import net.maxxqc.mydrops.utils.ConfigManager;
+import net.maxxqc.mydrops.utils.ProtectionType;
 import net.maxxqc.mydrops.utils.Utils;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -13,101 +14,94 @@ import java.util.UUID;
 import java.util.logging.Level;
 
 public class FileDatabase extends IDatabase {
-    private static FileConfiguration config;
+    private static FileConfiguration saveConfig;
     private static File configFile;
 
     @Override
     public String getGlowColor(UUID player) {
-        String color = config.getString(player + ".glow-color");
-
-        if (color == null)
-            return ConfigManager.getGlowColor().name();
-
-        return color;
+        return saveConfig.getString(player + ".glow-color", ConfigManager.getGlowColor().name());
     }
 
     @Override
     public void setGlowColor(UUID player, String color) {
-        config.set(player + ".glow-color", color);
+        saveConfig.set(player + ".glow-color", color);
         saveFile();
     }
 
     @Override
     public void addTrustedPlayer(UUID src, String target) {
-        List<String> trustedPlayers = config.getStringList(src + ".trusted-players");
-
-        if (trustedPlayers.contains(target))
-            return;
-
-        trustedPlayers.add(target);
-        config.set(src + ".trusted-players", trustedPlayers);
-        saveFile();
+        updateList(src + ".trusted-players", target, true);
     }
 
     @Override
     public void removeTrustedPlayer(UUID src, String target) {
-        List<String> trustedPlayers = config.getStringList(src + ".trusted-players");
-
-        if (!trustedPlayers.contains(target))
-            return;
-
-        trustedPlayers.remove(target);
-        config.set(src + ".trusted-players", trustedPlayers);
-        saveFile();
+        updateList(src + ".trusted-players", target, false);
     }
 
     @Override
     public void addTrustedParty(UUID src, String partyId) {
-        List<String> trustedParties = config.getStringList(src + ".trusted-parties");
-
-        if (trustedParties.contains(partyId))
-            return;
-
-        trustedParties.add(partyId);
-        config.set(src + ".trusted-parties", trustedParties);
-        saveFile();
+        updateList(src + ".trusted-parties", partyId, true);
     }
 
     @Override
     public void removeTrustedParty(UUID src, String partyId) {
-        List<String> trustedParties = config.getStringList(src + ".trusted-parties");
-
-        if (!trustedParties.contains(partyId))
-            return;
-
-        trustedParties.remove(partyId);
-        config.set(src + ".trusted-parties", trustedParties);
-        saveFile();
+        updateList(src + ".trusted-parties", partyId, false);
     }
 
     @Override
     public List<String> getTrustedPlayers(UUID player) {
-        return config.getStringList(player + ".trusted-players");
+        return saveConfig.getStringList(player + ".trusted-players");
     }
 
     @Override
     public List<String> getTrustedParties(UUID player) {
-        return config.getStringList(player + ".trusted-parties");
+        return saveConfig.getStringList(player + ".trusted-parties");
+    }
+
+    @Override
+    public boolean getProtection(UUID src, ProtectionType protectionType) {
+        String path = src + ".protection." + protectionType.getStringValue();
+        return saveConfig.getBoolean(path, ConfigManager.hasServerProtection(protectionType));
+    }
+
+    @Override
+    public void setProtection(UUID src, ProtectionType protectionType, boolean newValue) {
+        String path = src + ".protection." + protectionType.getStringValue();
+        boolean serverValue = ConfigManager.hasServerProtection(protectionType);
+        saveConfig.set(path, newValue == serverValue ? null : newValue);
+        saveFile();
     }
 
     @Override
     public void load() {
         configFile = new File(Utils.plugin.getDataFolder(), "players.yml");
 
-        if (!configFile.exists())
+        if (!configFile.exists()) {
             Utils.plugin.saveResource("players.yml", false);
+        }
 
-        config = YamlConfiguration.loadConfiguration(configFile);
+        saveConfig = YamlConfiguration.loadConfiguration(configFile);
         saveFile();
     }
 
-    private void saveFile()
-    {
+    private void saveFile() {
         try {
-            config.save(configFile);
-        }
-        catch (IOException e) {
+            saveConfig.save(configFile);
+        } catch (IOException e) {
             Utils.plugin.getLogger().log(Level.SEVERE, "Error saving player file: ", e);
         }
+    }
+
+    private void updateList(String path, String value, boolean add) {
+        List<String> list = saveConfig.getStringList(path);
+        if (add) {
+            if (!list.contains(value)) {
+                list.add(value);
+            }
+        } else {
+            list.remove(value);
+        }
+        saveConfig.set(path, list);
+        saveFile();
     }
 }

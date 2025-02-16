@@ -63,8 +63,8 @@ public final class MyDrops extends JavaPlugin implements Listener {
         handler.register("trust", new TrustCommand());
         handler.register("config", new ConfigCommand());
 
-        //if (ConfigManager.hasPerPlayerProtection()) TODO
-        //    handler.register("protection", new ProtectionCommand());
+        if (ConfigManager.hasPerPlayerProtection())
+            handler.register("protection", new ProtectionCommand());
 
         handler.register("trash", new TrashCommand());
 

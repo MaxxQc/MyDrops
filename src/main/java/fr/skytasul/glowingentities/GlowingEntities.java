@@ -193,7 +193,7 @@ public class GlowingEntities implements Listener {
 
             if (color == null) {
                 Packets.removeGlowingColor(glowingData);
-                glowingData.color = color; // we must set the color after in order to fetch the previous team
+                glowingData.color = null; // we must set the color after in order to fetch the previous team
             } else {
                 glowingData.color = color;
                 Packets.setGlowingColor(glowingData);
@@ -728,7 +728,7 @@ public class GlowingEntities implements Listener {
                                 }
                             }
                         }
-                    } else if (packetBundle != null && msg.getClass().equals(packetBundle)) {
+                    } else if (msg.getClass().equals(packetBundle)) {
                         handlePacketBundle(msg);
                     }
                     super.write(ctx, msg, promise);
@@ -791,7 +791,7 @@ public class GlowingEntities implements Listener {
                     Field field = superclass.getDeclaredField(name);
                     field.setAccessible(true);
                     return field;
-                } catch (NoSuchFieldException ex) {
+                } catch (NoSuchFieldException ignored) {
                 }
             } while ((superclass = clazz.getSuperclass()) != null);
 

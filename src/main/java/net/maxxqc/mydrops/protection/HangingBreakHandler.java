@@ -1,5 +1,7 @@
 package net.maxxqc.mydrops.protection;
 
+import net.maxxqc.mydrops.utils.ConfigManager;
+import net.maxxqc.mydrops.utils.ProtectionType;
 import net.maxxqc.mydrops.utils.Utils;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
@@ -18,10 +20,8 @@ public class HangingBreakHandler implements Listener
     @EventHandler
     private void onHangingBreak(HangingBreakByEntityEvent e)
     {
-        if (!(e.getRemover() instanceof Player))
+        if (!(e.getRemover() instanceof Player player) || !ConfigManager.getDatabase().getProtection(player, ProtectionType.HANGING_BREAK))
             return;
-
-        Player player = (Player) e.getRemover();
 
         if (e.getEntity() instanceof LeashHitch)
         {
@@ -30,7 +30,7 @@ public class HangingBreakHandler implements Listener
             return;
         }
 
-        if (((Player) e.getRemover()).getGameMode() == GameMode.CREATIVE) return;
+        if (player.getGameMode() == GameMode.CREATIVE) return;
 
         ItemStack is = null;
 
@@ -66,6 +66,9 @@ public class HangingBreakHandler implements Listener
 
     private void handleLeash(Entity entity, Player player)
     {
+        if (!ConfigManager.getDatabase().getProtection(player, ProtectionType.HANGING_BREAK))
+            return;
+
         //https://www.spigotmc.org/threads/prevent-break-fence-if-animal-is-attached-to-it-code-works-but-is-it-correct.102571/
         List<LivingEntity> attachedEntities = entity.getNearbyEntities(10, 10, 10).stream() // Creates the stream
                 .filter(ent -> ent instanceof LivingEntity) // Filters all entities that aren't living entities away.

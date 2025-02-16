@@ -2,7 +2,7 @@ package net.maxxqc.mydrops.commands;
 
 import net.maxxqc.mydrops.utils.ConfigManager;
 import net.maxxqc.mydrops.utils.Constants;
-import net.maxxqc.mydrops.utils.ProtectionTypes;
+import net.maxxqc.mydrops.utils.ProtectionType;
 import net.maxxqc.mydrops.utils.Utils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -25,31 +25,10 @@ public class CoreCommand implements CommandInterface, TabCompleter {
         ALL_COLORS.add("NONE");
         ALL_COLORS.add("DEFAULT");
 
-        PROTECTION_ARGS = Arrays.stream(ProtectionTypes.values()).map(Enum::toString).collect(Collectors.toSet());
-
-        if (!ConfigManager.hasItemDropProtection())
-            PROTECTION_ARGS.remove("itemdrop");
-
-        if (!ConfigManager.hasBlockBreakProtection())
-            PROTECTION_ARGS.remove("blockbreak");
-
-        if (!ConfigManager.hasItemFrameDropProtection())
-            PROTECTION_ARGS.remove("itemframedrop");
-
-        if (!ConfigManager.hasVehicleDestroyProtection())
-            PROTECTION_ARGS.remove("vehicledestroy");
-
-        if (!ConfigManager.hasHangingBreakProtection())
-            PROTECTION_ARGS.remove("hangingbreak");
-
-        if (!ConfigManager.hasEntityKillProtection())
-            PROTECTION_ARGS.remove("entitykill");
-
-        if (!ConfigManager.hasPlayerDeathProtection())
-            PROTECTION_ARGS.remove("playerdeath");
-
-        if (!ConfigManager.hasMythicMobsProtection())
-            PROTECTION_ARGS.remove("mythicmobs");
+        PROTECTION_ARGS = Arrays.stream(ProtectionType.values())
+                .filter(ConfigManager::hasServerProtection)
+                .map(ProtectionType::getStringValue)
+                .collect(Collectors.toSet());
 
         PROTECTION_ARGS.add("list");
     }
