@@ -88,10 +88,16 @@ public class MongoDB extends IDatabase {
 
         MongoCollection<Document> protectionsCollection = getDatabase().getCollection(ConfigManager.getDatabaseTablesPrefix() + "protections");
         for (Document doc : protectionsCollection.find(eq("uuid", uuid))) {
-            for (ProtectionType protectionType : ProtectionType.values()) {
-                String value = doc.getString(protectionType.getStringValue());
-                if (value != null) {
-                    protections.put(protectionType, Boolean.parseBoolean(value));
+            Document protectionsDoc = doc.get("protections", Document.class);
+
+            if (protectionsDoc == null) {
+                continue;
+            }
+
+            for (Map.Entry<String, Object> entry : protectionsDoc.entrySet()) {
+                ProtectionType protectionType = ProtectionType.fromValue(entry.getKey());
+                if (protectionType != null) {
+                    protections.put(protectionType, Boolean.parseBoolean(entry.getValue().toString()));
                 }
             }
         }

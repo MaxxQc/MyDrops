@@ -49,6 +49,7 @@ public class ConfigManager {
     private static String msgHelpCore;
     private static String msgHelpGlowcolor;
     private static String msgHelpProtection;
+    private static String msgHelpProtectionList;
     private static String msgHelpTrash;
     private static String msgHelpTrust;
     private static String msgHelpConfig;
@@ -69,6 +70,7 @@ public class ConfigManager {
     private static String msgCmdTrustSelf;
     private static String msgCmdProtectionInvalidType;
     private static String msgCmdProtectionSet;
+    private static String msgCmdProtectionList;
 
     private static String txtConfirmTitle;
     private static String txtConfigGUITitle;
@@ -265,8 +267,10 @@ public class ConfigManager {
         CONFIGS_ARGS.put("messages.commands.protection.invalid-type", Collections.singletonList("{type}"));
         config.addDefault("messages.commands.protection.set", "&aProtection type &2{type} &ahas been {status}");
         CONFIGS_ARGS.put("messages.commands.protection.set", Arrays.asList("{type}", "{status}"));
-        CONFIGS_ARGS.put("messages.commands.protection.invalid-value", Arrays.asList("{type}", "{value}"));
+        config.addDefault("messages.commands.protection.list", "&7Your protections: {protections}");
+        CONFIGS_ARGS.put("messages.commands.protection.list", Collections.singletonList("{protections}"));
         config.addDefault("messages.commands.protection.invalid-value", "&cInvalid value &4&o{value} &cfor protection type &4&o{type}");
+        CONFIGS_ARGS.put("messages.commands.protection.invalid-value", Arrays.asList("{type}", "{value}"));
         config.addDefault("messages.gui.confirmation.title", "&6Confirm?");
         CONFIGS_ARGS.put("messages.gui.confirmation.title", Collections.emptyList());
         config.addDefault("messages.gui.config.title", "&aConfiguration - {key}");
@@ -296,6 +300,8 @@ public class ConfigManager {
         CONFIGS_ARGS.put("messages.help.glowcolor", Collections.singletonList("{cmd}"));
         config.addDefault("messages.help.protection", "&6/{cmd} protection <protection type/list> [true/false]&e - Toggles a protection rule for yourself");
         CONFIGS_ARGS.put("messages.help.protection", Collections.singletonList("{cmd}"));
+        config.addDefault("messages.help.protection.list", "&6/{cmd} protection list&e - List all your protections");
+        CONFIGS_ARGS.put("messages.help.protection.list", Collections.emptyList());
         config.addDefault("messages.help.trash", "&6/{cmd} trash &e - Opens up a trash bin container");
         CONFIGS_ARGS.put("messages.help.trash", Collections.singletonList("{cmd}"));
         config.addDefault("messages.help.trust", "&6/{cmd} trust <add/addparty/remove/removeparty/list> [player] &e - Controls your trusted list");
@@ -442,6 +448,7 @@ public class ConfigManager {
         msgCmdRemoveSuccessParty = null;
         msgCmdProtectionInvalidType = null;
         msgCmdProtectionSet = null;
+        msgCmdProtectionList = null;
         msgYourParty = null;
         txtConfirmTitle = null;
         txtConfigGUITitle = null;
@@ -462,6 +469,7 @@ public class ConfigManager {
         msgHelpCore = null;
         msgHelpGlowcolor = null;
         msgHelpProtection = null;
+        msgHelpProtectionList = null;
         msgHelpTrash = null;
         msgHelpTrust = null;
         msgHelpConfig = null;
@@ -987,6 +995,12 @@ public class ConfigManager {
         return msgHelpProtection;
     }
 
+    public static String getMsgHelpProtectionList() {
+        if (msgHelpProtectionList == null)
+            msgHelpProtectionList = Utils.colorize(config.getString("messages.help.protection.list", "&6/{cmd} protection list&e - List all your protections"));
+        return msgHelpProtectionList;
+    }
+
     public static String getMsgHelpTrash() {
         if (msgHelpTrash == null)
             msgHelpTrash = Utils.colorize(config.getString("messages.help.trash", "&6/{cmd} trash &e - Opens up a trash bin container"));
@@ -1050,5 +1064,11 @@ public class ConfigManager {
         if (msgCmdProtectionSet == null)
             msgCmdProtectionSet = Utils.colorize(config.getString("messages.commands.protection.set", "&aProtection type &2{type} &ahas been {status}"));
         return msgCmdProtectionSet.replace("{type}", protectionType.getStringValue()).replace("{status}", value ? msgEnabled : msgDisabled);
+    }
+
+    public static String getMsgCmdProtectionList(String formattedProtections) {
+        if (msgCmdProtectionList == null)
+            msgCmdProtectionList = Utils.colorize(config.getString("messages.commands.protection.list", "&7Your protections: {protections}"));
+        return msgCmdProtectionList.replace("{protections}", formattedProtections);
     }
 }

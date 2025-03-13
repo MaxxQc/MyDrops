@@ -8,6 +8,9 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 public class ProtectionCommand implements CommandInterface
 {
     @Override
@@ -17,6 +20,18 @@ public class ProtectionCommand implements CommandInterface
         if (args.length < 2) {
             // TODO open gui
             sender.sendMessage(ConfigManager.getMsgCmdProtectionUsage(commandLabel));
+            return true;
+        }
+
+        if (args[1].equalsIgnoreCase("list")) {
+            String protections = Arrays.stream(ProtectionType.values())
+                    .filter(ConfigManager::hasServerProtection)
+                    .map(type -> {
+                        boolean value = ConfigManager.getDatabase().getProtection(player, type);
+                        return value ? Utils.colorize("&2" + type.getStringValue()) : Utils.colorize("&4" + type.getStringValue());
+                    }).collect(Collectors.joining(Utils.colorize("&7, ")));
+
+            player.sendMessage(ConfigManager.getMsgCmdProtectionList(protections));
             return true;
         }
 

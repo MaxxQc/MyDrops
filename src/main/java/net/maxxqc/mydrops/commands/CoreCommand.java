@@ -44,7 +44,10 @@ public class CoreCommand implements CommandInterface, TabCompleter {
             player.sendMessage(ConfigManager.getMsgHelpGlowcolor().replace("{cmd}", commandLabel));
 
         if (ConfigManager.hasPerPlayerProtection() && player.hasPermission("mydrops.command.protection"))
+        {
             player.sendMessage(ConfigManager.getMsgHelpProtection().replace("{cmd}", commandLabel));
+            player.sendMessage(ConfigManager.getMsgHelpProtectionList().replace("{cmd}", commandLabel));
+        }
 
         if (player.hasPermission("mydrops.command.trash"))
             player.sendMessage(ConfigManager.getMsgHelpTrash().replace("{cmd}", commandLabel));
@@ -109,7 +112,6 @@ public class CoreCommand implements CommandInterface, TabCompleter {
                         , completions);
             }
         }
-        //TODO protection only return enabled protection on server
         else if (args.length == 3) {
             if (args[0].equalsIgnoreCase("config") && sender.hasPermission("mydrops.command.config")) {
                 if (args[1].equalsIgnoreCase("worlds.list")) {
